@@ -297,11 +297,202 @@ export interface InstrumentFeedback {
 }
 
 // ---------------------------------------------------------------------------
+// Module 5 - IOC Quality Lab
+// ---------------------------------------------------------------------------
+
+/** A single expert's rating for an item: -1 (not congruent), 0 (unsure), 1 (congruent). */
+export type IOCExpertRating = -1 | 0 | 1;
+
+/** One simulated IOC exercise item with a fixed panel of expert ratings. */
+export interface IOCItem {
+  id: string;
+  statement: string;
+  sourceLabel: string;
+  expertRatings: IOCExpertRating[];
+}
+
+/** The learner-facing decision after interpreting an item's IOC value. */
+export type IOCDecision = 'KEEP' | 'REVISE' | 'REMOVE_RECONSIDER';
+
+/** Deterministic result of applying the IOC formula to an item's expert ratings. */
+export interface IOCResult {
+  sumR: number;
+  n: number;
+  ioc: number;
+  meetsThreshold: boolean;
+}
+
+export interface IOCScenario {
+  id: string;
+  title: string;
+  simulatedDataLabel: string;
+  context: string;
+  item: IOCItem;
+  expectedSumR: number;
+  expectedIOC: number;
+  expectedDecision: IOCDecision;
+  expectedReasoning: string;
+  commonMisconception?: string;
+  teachingPrompt: string;
+  a4Linkage: string;
+}
+
+/** A learner's in-progress work on one IOC scenario. */
+export interface Module5Submission {
+  scenarioId: string;
+  enteredSumR: string;
+  enteredIOC: string;
+  decision: IOCDecision | null;
+  reasoning: string;
+}
+
+/** Structured feedback levels distinguishing calculation accuracy from interpretation. */
+export type IOCFeedbackLevel =
+  | 'CALCULATION_CORRECT'
+  | 'CALCULATION_RECHECK'
+  | 'INTERPRETATION_CONFIRMED'
+  | 'INTERPRETATION_RECHECK'
+  | 'READY_FOR_REVISION_DECISION';
+
+export interface IOCFeedback {
+  level: IOCFeedbackLevel;
+  messages: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Module 6 - Bias & Ethics Simulator
+// ---------------------------------------------------------------------------
+
+export type BiasType = 'RECALL_BIAS' | 'SOCIAL_DESIRABILITY_BIAS' | 'NONE_IDENTIFIED';
+
+export interface BiasRisk {
+  id: BiasType;
+  label: string;
+  labelTh: string;
+  description: string;
+}
+
+export type EthicsRiskType =
+  | 'PRIVACY_CONFIDENTIALITY'
+  | 'STIGMATIZATION_RISK'
+  | 'DATA_MINIMIZATION'
+  | 'NONE_IDENTIFIED';
+
+export interface EthicsRisk {
+  id: EthicsRiskType;
+  label: string;
+  labelTh: string;
+  description: string;
+}
+
+export interface MitigationAction {
+  id: string;
+  label: string;
+}
+
+export interface DataCollectionPlan {
+  description: string;
+}
+
+export interface EthicsScenario {
+  id: string;
+  title: string;
+  simulatedDataLabel: string;
+  context: string;
+  originalPlan: DataCollectionPlan;
+  expectedBias: BiasType;
+  expectedEthicsRisk: EthicsRiskType;
+  acceptableMitigationIds: string[];
+  mitigationOptions: MitigationAction[];
+  expectedReasoning: string;
+  acceptableAlternativeReasoning?: string;
+  commonMisconception?: string;
+  discussionPrompt: string;
+  debriefQuestion: string;
+  clo5Linkage: string;
+  a4Linkage: string;
+}
+
+/** The learner's reasoning + choices about one bias/ethics scenario. */
+export interface EthicsDecision {
+  scenarioId: string;
+  selectedBias: BiasType | null;
+  selectedEthicsRisk: EthicsRiskType | null;
+  whyItMatters: string;
+  selectedMitigationId: string | null;
+  submitted: boolean;
+}
+
+export type Module6Submission = EthicsDecision;
+
+/** Structured, non-binary feedback levels for the Bias & Ethics Simulator. */
+export type EthicsFeedbackLevel =
+  | 'BIAS_IDENTIFIED'
+  | 'ETHICAL_RISK_IDENTIFIED'
+  | 'MITIGATION_PARTIAL'
+  | 'PLAN_IMPROVED'
+  | 'RECONSIDER_DATA_COLLECTION';
+
+export interface EthicsFeedback {
+  level: EthicsFeedbackLevel;
+  messages: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Module 7 - Weighted Rubric Sandbox
+// ---------------------------------------------------------------------------
+
+export interface RubricLevel {
+  level: number;
+  label: string;
+  labelTh: string;
+}
+
+export interface RubricDimension {
+  id: string;
+  label: string;
+  labelTh: string;
+  description: string;
+  defaultWeight: number;
+  maxLevel: number;
+}
+
+/** A learner-adjustable weight assignment for one rubric dimension. */
+export interface RubricWeight {
+  dimensionId: string;
+  weight: number;
+}
+
+/** A learner-selected obtained level for one rubric dimension. */
+export interface RubricScore {
+  dimensionId: string;
+  obtainedLevel: number;
+}
+
+/** Deterministic per-dimension and total calculation result for the rubric sandbox. */
+export interface RubricResult {
+  totalWeight: number;
+  totalWeightValid: boolean;
+  totalScore: number;
+  perDimension: {
+    dimensionId: string;
+    normalizedProportion: number;
+    weightedContribution: number;
+  }[];
+}
+
+/** A learner's in-progress rubric sandbox state: weights + obtained levels per dimension. */
+export interface Module7Submission {
+  weights: RubricWeight[];
+  scores: RubricScore[];
+}
+
+// ---------------------------------------------------------------------------
 // Session state persisted to storage
 // ---------------------------------------------------------------------------
 
 /** Bump when the shape of SessionState changes in a way that requires migration. */
-export const SESSION_SCHEMA_VERSION = 2;
+export const SESSION_SCHEMA_VERSION = 3;
 
 export interface SessionState {
   schemaVersion: number;
@@ -323,5 +514,17 @@ export interface SessionState {
   module4: {
     status: ActivityStatus;
     submissions: Module4Submission[];
+  };
+  module5: {
+    status: ActivityStatus;
+    submissions: Module5Submission[];
+  };
+  module6: {
+    status: ActivityStatus;
+    submissions: Module6Submission[];
+  };
+  module7: {
+    status: ActivityStatus;
+    submissions: Module7Submission[];
   };
 }

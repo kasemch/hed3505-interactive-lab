@@ -1,13 +1,19 @@
 import type {
   ActivityStatus,
   AlignmentIssueCategory,
+  BiasType,
+  EthicsRiskType,
   EvidenceCategory,
   FrameworkId,
+  IOCDecision,
   KAPConstruct,
   Module1Submission,
   Module2Submission,
   Module3Submission,
   Module4Submission,
+  Module5Submission,
+  Module6Submission,
+  Module7Submission,
   ResponseFormat,
   SessionState,
   StepId,
@@ -26,6 +32,9 @@ export const defaultSessionState: SessionState = {
   module2: { status: 'INITIAL', submissions: [] },
   module3: { status: 'INITIAL', submissions: [] },
   module4: { status: 'INITIAL', submissions: [] },
+  module5: { status: 'INITIAL', submissions: [] },
+  module6: { status: 'INITIAL', submissions: [] },
+  module7: { status: 'INITIAL', submissions: [] },
 };
 
 const evidenceCategories: EvidenceCategory[] = ['PROCESS', 'OUTPUT', 'OUTCOME', 'IMPACT'];
@@ -48,6 +57,14 @@ const responseFormatIds: ResponseFormat[] = [
   'FREQUENCY',
   'OCCURRENCE',
   'BEHAVIOR_SPECIFIC',
+];
+const iocDecisions: IOCDecision[] = ['KEEP', 'REVISE', 'REMOVE_RECONSIDER'];
+const biasTypes: BiasType[] = ['RECALL_BIAS', 'SOCIAL_DESIRABILITY_BIAS', 'NONE_IDENTIFIED'];
+const ethicsRiskTypes: EthicsRiskType[] = [
+  'PRIVACY_CONFIDENTIALITY',
+  'STIGMATIZATION_RISK',
+  'DATA_MINIMIZATION',
+  'NONE_IDENTIFIED',
 ];
 
 function isValidStatus(status: unknown): status is ActivityStatus {
@@ -97,6 +114,54 @@ function isValidModule4Submission(value: unknown): value is Module4Submission {
     typeof s.draftItem === 'string' &&
     (s.responseFormat === null || responseFormatIds.includes(s.responseFormat as ResponseFormat)) &&
     typeof s.rationale === 'string'
+  );
+}
+
+function isValidModule5Submission(value: unknown): value is Module5Submission {
+  if (typeof value !== 'object' || value === null) return false;
+  const s = value as Partial<Module5Submission>;
+  return (
+    typeof s.scenarioId === 'string' &&
+    typeof s.enteredSumR === 'string' &&
+    typeof s.enteredIOC === 'string' &&
+    (s.decision === null || iocDecisions.includes(s.decision as IOCDecision)) &&
+    typeof s.reasoning === 'string'
+  );
+}
+
+function isValidModule6Submission(value: unknown): value is Module6Submission {
+  if (typeof value !== 'object' || value === null) return false;
+  const s = value as Partial<Module6Submission>;
+  return (
+    typeof s.scenarioId === 'string' &&
+    (s.selectedBias === null || biasTypes.includes(s.selectedBias as BiasType)) &&
+    (s.selectedEthicsRisk === null || ethicsRiskTypes.includes(s.selectedEthicsRisk as EthicsRiskType)) &&
+    typeof s.whyItMatters === 'string' &&
+    (s.selectedMitigationId === null || typeof s.selectedMitigationId === 'string') &&
+    typeof s.submitted === 'boolean'
+  );
+}
+
+function isValidRubricWeight(value: unknown): value is { dimensionId: string; weight: number } {
+  if (typeof value !== 'object' || value === null) return false;
+  const w = value as { dimensionId?: unknown; weight?: unknown };
+  return typeof w.dimensionId === 'string' && typeof w.weight === 'number' && Number.isFinite(w.weight);
+}
+
+function isValidRubricScore(value: unknown): value is { dimensionId: string; obtainedLevel: number } {
+  if (typeof value !== 'object' || value === null) return false;
+  const s = value as { dimensionId?: unknown; obtainedLevel?: unknown };
+  return typeof s.dimensionId === 'string' && typeof s.obtainedLevel === 'number' && Number.isFinite(s.obtainedLevel);
+}
+
+function isValidModule7Submission(value: unknown): value is Module7Submission {
+  if (typeof value !== 'object' || value === null) return false;
+  const s = value as Partial<Module7Submission>;
+  return (
+    Array.isArray(s.weights) &&
+    s.weights.every(isValidRubricWeight) &&
+    Array.isArray(s.scores) &&
+    s.scores.every(isValidRubricScore)
   );
 }
 
@@ -157,6 +222,9 @@ export function loadSessionState(): SessionState {
       module2: readModuleSection(parsed.module2, isValidModule2Submission, defaultSessionState.module2),
       module3: readModuleSection(parsed.module3, isValidModule3Submission, defaultSessionState.module3),
       module4: readModuleSection(parsed.module4, isValidModule4Submission, defaultSessionState.module4),
+      module5: readModuleSection(parsed.module5, isValidModule5Submission, defaultSessionState.module5),
+      module6: readModuleSection(parsed.module6, isValidModule6Submission, defaultSessionState.module6),
+      module7: readModuleSection(parsed.module7, isValidModule7Submission, defaultSessionState.module7),
     };
   } catch {
     return defaultSessionState;

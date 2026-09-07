@@ -5,6 +5,9 @@ import { Module1 } from './modules/module1/Module1';
 import { Module2 } from './modules/module2/Module2';
 import { Module3 } from './modules/module3/Module3';
 import { Module4 } from './modules/module4/Module4';
+import { Module5 } from './modules/module5/Module5';
+import { Module6 } from './modules/module6/Module6';
+import { Module7 } from './modules/module7/Module7';
 import { useSession } from './context/SessionContext';
 
 function App() {
@@ -17,7 +20,10 @@ function App() {
       {state.currentStep === 'module-2' && <Module2 />}
       {state.currentStep === 'module-3' && <Module3 />}
       {state.currentStep === 'module-4' && <Module4 />}
-      {['module-5', 'module-6', 'module-7', 'module-8'].includes(state.currentStep) && (
+      {state.currentStep === 'module-5' && <Module5 />}
+      {state.currentStep === 'module-6' && <Module6 />}
+      {state.currentStep === 'module-7' && <Module7 />}
+      {state.currentStep === 'module-8' && (
         <div className="rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
           โมดูลนี้ยังไม่เปิดใช้งานในต้นแบบนี้ (Not built in this build gate).
         </div>

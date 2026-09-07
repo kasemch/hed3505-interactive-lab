@@ -20,6 +20,9 @@ export function A4ReadinessSummary() {
   const module4IndicatorsFilled =
     state.module4.submissions.length > 0 && state.module4.submissions.every((s) => s.indicator.trim().length > 0);
   const module4Done = state.module4.status === 'SUBMITTED' || state.module4.status === 'REVIEW';
+  const module5Done = state.module5.status === 'SUBMITTED' || state.module5.status === 'REVIEW';
+  const module6Done = state.module6.status === 'SUBMITTED' || state.module6.status === 'REVIEW';
+  const module7Done = state.module7.status === 'SUBMITTED' || state.module7.status === 'REVIEW';
 
   const readyItems: ReadinessItem[] = [
     { label: 'Evaluation purpose (วัตถุประสงค์การประเมิน)', done: module2Done },
@@ -27,13 +30,14 @@ export function A4ReadinessSummary() {
     { label: 'Objective/question alignment (ความสอดคล้องวัตถุประสงค์-คำถามประเมิน)', done: module3Done },
     { label: 'Indicator (ตัวชี้วัด)', done: module4IndicatorsFilled },
     { label: 'Draft K/A/P item (ร่างข้อคำถาม K/A/P)', done: module4Done },
+    { label: 'Quality Review (การตรวจสอบคุณภาพเครื่องมือ - IOC)', done: module5Done },
+    { label: 'Bias/Ethics Review (การพิจารณาอคติและจริยธรรม)', done: module6Done },
+    { label: 'Rubric Logic (ตรรกะเกณฑ์การให้คะแนนถ่วงน้ำหนัก)', done: module7Done },
   ];
 
   const pendingSections = [
-    'Quality verification (การตรวจสอบคุณภาพเครื่องมือ)',
-    'Ethics review (การพิจารณาจริยธรรม)',
-    'Rubric (เกณฑ์การให้คะแนน)',
     'Evaluation Matrix (ตารางสรุปการประเมิน)',
+    'Final A4 Assembly (การประกอบร่าง A4 ฉบับสมบูรณ์)',
   ];
 
   return (

@@ -10,6 +10,9 @@ export function Footer() {
     if (state.currentStep === 'module-2') return state.module2.status;
     if (state.currentStep === 'module-3') return state.module3.status;
     if (state.currentStep === 'module-4') return state.module4.status;
+    if (state.currentStep === 'module-5') return state.module5.status;
+    if (state.currentStep === 'module-6') return state.module6.status;
+    if (state.currentStep === 'module-7') return state.module7.status;
     return '—';
   };
 

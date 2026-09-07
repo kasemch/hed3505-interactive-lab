@@ -16,6 +16,12 @@ function isModuleComplete(state: SessionState, step: StepId): boolean {
       return state.module3.status === 'SUBMITTED' || state.module3.status === 'REVIEW';
     case 'module-4':
       return state.module4.status === 'SUBMITTED' || state.module4.status === 'REVIEW';
+    case 'module-5':
+      return state.module5.status === 'SUBMITTED' || state.module5.status === 'REVIEW';
+    case 'module-6':
+      return state.module6.status === 'SUBMITTED' || state.module6.status === 'REVIEW';
+    case 'module-7':
+      return state.module7.status === 'SUBMITTED' || state.module7.status === 'REVIEW';
     default:
       return false;
   }

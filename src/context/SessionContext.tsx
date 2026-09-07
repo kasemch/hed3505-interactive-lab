@@ -6,6 +6,9 @@ import type {
   Module2Submission,
   Module3Submission,
   Module4Submission,
+  Module5Submission,
+  Module6Submission,
+  Module7Submission,
   SessionState,
   StepId,
   UserMode,
@@ -21,6 +24,9 @@ interface SessionContextValue {
   setModule2: (status: ActivityStatus, submissions: Module2Submission[]) => void;
   setModule3: (status: ActivityStatus, submissions: Module3Submission[]) => void;
   setModule4: (status: ActivityStatus, submissions: Module4Submission[]) => void;
+  setModule5: (status: ActivityStatus, submissions: Module5Submission[]) => void;
+  setModule6: (status: ActivityStatus, submissions: Module6Submission[]) => void;
+  setModule7: (status: ActivityStatus, submissions: Module7Submission[]) => void;
 }
 
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
@@ -47,6 +53,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setState((prev) => ({ ...prev, module3: { status, submissions } })),
       setModule4: (status, submissions) =>
         setState((prev) => ({ ...prev, module4: { status, submissions } })),
+      setModule5: (status, submissions) =>
+        setState((prev) => ({ ...prev, module5: { status, submissions } })),
+      setModule6: (status, submissions) =>
+        setState((prev) => ({ ...prev, module6: { status, submissions } })),
+      setModule7: (status, submissions) =>
+        setState((prev) => ({ ...prev, module7: { status, submissions } })),
     }),
     [state],
   );
