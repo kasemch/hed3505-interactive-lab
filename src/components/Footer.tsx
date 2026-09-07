@@ -8,6 +8,8 @@ export function Footer() {
   const progressLabel = () => {
     if (state.currentStep === 'module-1') return state.module1.status;
     if (state.currentStep === 'module-2') return state.module2.status;
+    if (state.currentStep === 'module-3') return state.module3.status;
+    if (state.currentStep === 'module-4') return state.module4.status;
     return '—';
   };
 

@@ -126,10 +126,185 @@ export interface Module2Submission {
 }
 
 // ---------------------------------------------------------------------------
+// Module 3 - Evaluation Alignment Debugger
+// ---------------------------------------------------------------------------
+
+/** Canonical reasoning chain node types, in the order they should logically connect. */
+export type AlignmentNodeType =
+  | 'OBJECTIVE'
+  | 'QUESTION'
+  | 'INDICATOR'
+  | 'DATA_SOURCE'
+  | 'INSTRUMENT'
+  | 'ANALYSIS'
+  | 'DECISION';
+
+/** A single node in the evaluation chain (e.g. the stated objective, the indicator, etc.). */
+export interface AlignmentNode {
+  id: string;
+  type: AlignmentNodeType;
+  label: string;
+  statement: string;
+}
+
+/** A connection between two adjacent nodes in the chain that can be inspected for coherence. */
+export interface AlignmentLink {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
+  label: string;
+}
+
+/** The kind of conceptual mismatch a misaligned link can represent. */
+export type AlignmentIssueCategory =
+  | 'OBJECTIVE_QUESTION'
+  | 'QUESTION_INDICATOR'
+  | 'INDICATOR_DATA_SOURCE'
+  | 'INDICATOR_INSTRUMENT'
+  | 'INSTRUMENT_CLAIM'
+  | 'ANALYSIS_DECISION';
+
+export interface AlignmentCategoryDefinition {
+  id: AlignmentIssueCategory;
+  label: string;
+  labelTh: string;
+  description: string;
+}
+
+export interface AlignmentCorrectionOption {
+  id: string;
+  label: string;
+}
+
+/** The single deliberately-planted misalignment within a scenario's chain. */
+export interface AlignmentIssue {
+  linkId: string;
+  category: AlignmentIssueCategory;
+  correctionOptions: AlignmentCorrectionOption[];
+  correctCorrectionId: string;
+  expectedReasoning: string;
+  acceptableAlternativeReasoning?: string;
+  commonMisconception?: string;
+  facilitationPrompt: string;
+  debriefQuestion: string;
+  a4Linkage: string;
+}
+
+export interface AlignmentScenario {
+  id: string;
+  title: string;
+  simulatedDataLabel: string;
+  context: string;
+  nodes: AlignmentNode[];
+  links: AlignmentLink[];
+  issue: AlignmentIssue;
+}
+
+export interface Module3Submission {
+  scenarioId: string;
+  selectedLinkId: string | null;
+  selectedCategory: AlignmentIssueCategory | null;
+  selectedCorrectionId: string | null;
+  justification: string;
+}
+
+/** Structured, non-generic feedback levels for the Alignment Debugger. */
+export type AlignmentFeedbackLevel =
+  | 'ALIGNMENT_CONFIRMED'
+  | 'PARTIAL_ALIGNMENT'
+  | 'MISALIGNMENT_DETECTED'
+  | 'RECONSIDER_LINK';
+
+export interface AlignmentEvaluation {
+  linkCorrect: boolean;
+  categoryCorrect: boolean;
+  correctionCorrect: boolean;
+  level: AlignmentFeedbackLevel;
+}
+
+// ---------------------------------------------------------------------------
+// Module 4 - K-A-P Instrument Studio
+// ---------------------------------------------------------------------------
+
+export type KAPConstruct = 'KNOWLEDGE' | 'ATTITUDE' | 'PRACTICE';
+
+export interface KAPConstructDefinition {
+  id: KAPConstruct;
+  label: string;
+  labelTh: string;
+  description: string;
+  guardrail: string;
+  exampleIndicator: string;
+  recommendedResponseFormats: ResponseFormat[];
+}
+
+/** An example indicator statement offered as reference material for a construct (not graded). */
+export interface KAPIndicator {
+  construct: KAPConstruct;
+  statement: string;
+}
+
+export type ResponseFormat =
+  | 'MULTIPLE_CHOICE'
+  | 'TRUE_FALSE'
+  | 'SELECTED_RESPONSE'
+  | 'LIKERT_AGREEMENT'
+  | 'EVALUATIVE_SCALE'
+  | 'FREQUENCY'
+  | 'OCCURRENCE'
+  | 'BEHAVIOR_SPECIFIC';
+
+export interface ResponseFormatDefinition {
+  id: ResponseFormat;
+  label: string;
+  labelTh: string;
+}
+
+/** An example item offered for instructor reference, illustrating strong vs. weak phrasing. */
+export interface KAPItem {
+  construct: KAPConstruct;
+  draftItem: string;
+  responseFormat: ResponseFormat;
+}
+
+/** A student's in-progress draft for one K/A/P construct workspace. */
+export interface InstrumentCandidate {
+  construct: KAPConstruct;
+  operationalMeaning: string;
+  indicator: string;
+  draftItem: string;
+  responseFormat: ResponseFormat | null;
+  rationale: string;
+}
+
+export type Module4Submission = InstrumentCandidate;
+
+export interface InstrumentDraft {
+  items: Module4Submission[];
+}
+
+/** Deterministic, rule-based feedback levels for a K/A/P draft item. */
+export type InstrumentFeedbackLevel =
+  | 'CONSTRUCT_MATCH'
+  | 'POSSIBLE_CONSTRUCT_MISMATCH'
+  | 'INDICATOR_ITEM_MISALIGNMENT'
+  | 'RESPONSE_FORMAT_CONCERN'
+  | 'READY_FOR_EXPERT_REVIEW';
+
+export interface InstrumentFeedback {
+  level: InstrumentFeedbackLevel;
+  messages: string[];
+}
+
+// ---------------------------------------------------------------------------
 // Session state persisted to storage
 // ---------------------------------------------------------------------------
 
+/** Bump when the shape of SessionState changes in a way that requires migration. */
+export const SESSION_SCHEMA_VERSION = 2;
+
 export interface SessionState {
+  schemaVersion: number;
   mode: UserMode;
   currentStep: StepId;
   hasEnteredLab: boolean;
@@ -140,5 +315,13 @@ export interface SessionState {
   module2: {
     status: ActivityStatus;
     submissions: Module2Submission[];
+  };
+  module3: {
+    status: ActivityStatus;
+    submissions: Module3Submission[];
+  };
+  module4: {
+    status: ActivityStatus;
+    submissions: Module4Submission[];
   };
 }
