@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>HED3505 Live Smoke Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./live-config.js"></script>
+  <style>
+    body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f8fafc;color:#0f172a}main{max-width:760px;margin:auto;padding:20px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:24px;padding:20px;margin-bottom:16px}.btn{min-height:48px;border:0;border-radius:14px;padding:0 16px;font-weight:800;cursor:pointer}.primary{background:#0f766e;color:white}.dark{background:#0f172a;color:white}.outline{background:white;border:1px solid #cbd5e1}.danger{background:#fff1f2;color:#be123c}.grid{display:grid;gap:10px}.hidden{display:none}.muted{color:#64748b;font-size:14px}.ok{color:#047857}.warn{color:#b45309}.err{color:#be123c}input,select{width:100%;box-sizing:border-box;font:inherit;padding:12px;border:1px solid #cbd5e1;border-radius:14px;margin-top:6px}label{font-weight:700;display:block;margin-top:10px}pre{white-space:pre-wrap;background:#f1f5f9;padding:12px;border-radius:14px;font-size:12px}.pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#ecfeff;color:#155e75;font-size:12px;font-weight:800}.row{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:520px){main{padding:12px}.card{padding:16px}}
+  </style>
+</head>
+<body>
+<main>
+  <section class="card">
+    <span class="pill">NON-PRODUCTION</span>
+    <h1>HED3505 Live Response Smoke Test</h1>
+    <p class="muted">โรงเรียนอรุณพัฒนา • GitHub Pages front-end + Supabase backend • Synthetic pilot only</p>
+  </section>
+
+  <section id="authCard" class="card">
+    <h2>1) Sign in</h2>
+    <p class="muted">กรอกอีเมลของบัญชี Supabase Auth ที่ได้รับอนุญาต ระบบจะส่ง Magic Link</p>
+    <label>Email<input id="email" type="email" autocomplete="email" placeholder="name@example.com"></label>
+    <button id="sendLink" class="btn primary" style="margin-top:12px;width:100%">Send Magic Link</button>
+    <p id="authStatus" class="muted"></p>
+  </section>
+
+  <section id="sessionCard" class="card hidden">
+    <h2>2) Authenticated session</h2>
+    <p id="userInfo" class="muted"></p>
+    <p>Role: <strong id="roleText">checking…</strong></p>
+    <div class="row"><button id="signOut" class="btn outline">Sign out</button></div>
+  </section>
+
+  <section id="instructorCard" class="card hidden">
+    <h2>Instructor controls</h2>
+    <p class="muted">Pilot activity session: <code>408bdd66…</code></p>
+    <div class="grid">
+      <button id="openActivity" class="btn dark">Open activity</button>
+      <button id="refreshResult" class="btn outline">Refresh aggregate</button>
+      <button id="revealActivity" class="btn primary">Reveal aggregate</button>
+      <button id="closeActivity" class="btn danger">Close activity</button>
+    </div>
+    <pre id="instructorResult">No result yet.</pre>
+  </section>
+
+  <section id="learnerCard" class="card hidden">
+    <h2>Learner live response</h2>
+    <p id="activityPrompt" class="muted">Checking open activity…</p>
+    <label>Answer
+      <select id="answer">
+        <option value="">เลือกคำตอบ</option>
+        <option>Attendance</option>
+        <option>Satisfaction</option>
+        <option>Performance pass rate</option>
+      </select>
+    </label>
+    <label>Confidence
+      <select id="confidence"><option value="">เลือก 1–5</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+    </label>
+    <button id="submitResponse" class="btn primary" style="margin-top:12px;width:100%">Submit response</button>
+    <p id="submitStatus" class="muted"></p>
+    <button id="showResult" class="btn outline" style="margin-top:8px;width:100%">Check class result</button>
+    <pre id="learnerResult">Result hidden until instructor reveal.</pre>
+  </section>
+
+  <section class="card">
+    <h2>Smoke-test checklist</h2>
+    <div id="checks" class="grid muted"></div>
+  </section>
+</main>
+<script>
+(async()=>{
+  const cfg=window.HED3505_LIVE_CONFIG;
+  const sb=window.supabase.createClient(cfg.projectUrl,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  const $=s=>document.querySelector(s);
+  const setCheck=(k,v,msg)=>{let el=document.getElementById('c_'+k);if(!el){el=document.createElement('div');el.id='c_'+k;$('#checks').appendChild(el)}el.className=v?'ok':'warn';el.textContent=(v?'✓ ':'○ ')+msg};
+  setCheck('config',!!cfg.projectUrl&&!!cfg.publishableKey,'Browser-safe publishable config loaded');
+
+  async function roleProbe(){const {data,error}=await sb.rpc('hed3505_is_instructor');if(error)throw error;return data===true}
+  async function renderSession(){
+    const {data:{session}}=await sb.auth.getSession();
+    const signed=!!session?.user;
+    $('#sessionCard').classList.toggle('hidden',!signed);
+    $('#learnerCard').classList.toggle('hidden',!signed);
+    if(!signed){$('#instructorCard').classList.add('hidden');return}
+    $('#userInfo').textContent='Authenticated user id: '+session.user.id;
+    setCheck('auth',true,'Authenticated session active');
+    try{const inst=await roleProbe();$('#roleText').textContent=inst?'Instructor':'Learner';$('#instructorCard').classList.toggle('hidden',!inst);setCheck('role',true,'Authority probe completed');}
+    catch(e){$('#roleText').textContent='role check failed';setCheck('role',false,'Authority probe failed: '+e.message)}
+    await loadOpenActivity();
+  }
+
+  $('#sendLink').onclick=async()=>{const email=$('#email').value.trim();if(!email){$('#authStatus').textContent='กรุณากรอกอีเมล';return}$('#authStatus').textContent='Sending…';const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.href.split('#')[0]}});$('#authStatus').textContent=error?'Error: '+error.message:'Magic Link sent. เปิดลิงก์จากอีเมลแล้วกลับหน้านี้';};
+  $('#signOut').onclick=async()=>{await sb.auth.signOut();location.reload()};
+
+  async function loadOpenActivity(){const {data,error}=await sb.rpc('hed3505_get_open_activity');if(error){$('#activityPrompt').textContent='Activity lookup error: '+error.message;return null}const a=Array.isArray(data)?data[0]:data;if(a){$('#activityPrompt').textContent=a.prompt+' • '+a.module_id+' / '+a.clo_id;setCheck('openread',true,'Open activity visible to authenticated learner');return a}else{$('#activityPrompt').textContent='No OPEN activity. Instructor must open the pilot activity first.';return null}}
+
+  $('#openActivity').onclick=async()=>{const {error}=await sb.rpc('hed3505_instructor_open_activity',{p_activity_session_id:cfg.pilotActivitySessionId});$('#instructorResult').textContent=error?'OPEN ERROR: '+error.message:'Activity OPEN';setCheck('open',!error,'Instructor open activity '+(!error?'passed':'failed'));await loadOpenActivity()};
+  $('#closeActivity').onclick=async()=>{const {error}=await sb.rpc('hed3505_instructor_close_activity',{p_activity_session_id:cfg.pilotActivitySessionId});$('#instructorResult').textContent=error?'CLOSE ERROR: '+error.message:'Activity CLOSED';setCheck('close',!error,'Instructor close activity '+(!error?'passed':'failed'))};
+  $('#revealActivity').onclick=async()=>{const {error}=await sb.rpc('hed3505_instructor_reveal_activity',{p_activity_session_id:cfg.pilotActivitySessionId});$('#instructorResult').textContent=error?'REVEAL ERROR: '+error.message:'Aggregate AVAILABLE';setCheck('reveal',!error,'Instructor reveal '+(!error?'passed':'failed'));};
+
+  async function getResult(target){const {data,error}=await sb.rpc('hed3505_class_result',{p_activity_session_id:cfg.pilotActivitySessionId});target.textContent=error?'RESULT: '+error.message:JSON.stringify(data,null,2);return {data,error}}
+  $('#refreshResult').onclick=()=>getResult($('#instructorResult'));
+  $('#showResult').onclick=async()=>{const r=await getResult($('#learnerResult'));setCheck('result',!r.error&&Array.isArray(r.data)&&r.data.length>0,'Learner aggregate visible after reveal')};
+
+  $('#submitResponse').onclick=async()=>{const a=$('#answer').value,c=Number($('#confidence').value);if(!a||!c){$('#submitStatus').textContent='เลือกคำตอบและ Confidence ก่อน';return}$('#submitStatus').textContent='Submitting…';const {data,error}=await sb.rpc('hed3505_submit_response',{p_activity_session_id:cfg.pilotActivitySessionId,p_response:a,p_confidence:c});if(error){$('#submitStatus').textContent='NOT SUBMITTED: '+error.message;setCheck('submit',false,'Response not submitted: '+error.message)}else{$('#submitStatus').textContent='Submitted and backend confirmed';setCheck('submit',true,'Backend-confirmed response stored');setCheck('confidence',true,'Confidence persisted with response')}};
+
+  sb.channel('hed3505-smoke').on('postgres_changes',{event:'INSERT',schema:'hed3505_live',table:'responses',filter:'activity_session_id=eq.'+cfg.pilotActivitySessionId},async()=>{setCheck('realtime',true,'Realtime response event received');const {data:{session}}=await sb.auth.getSession();if(session&&await roleProbe())await getResult($('#instructorResult'));}).subscribe();
+
+  sb.auth.onAuthStateChange(()=>setTimeout(renderSession,0));
+  await renderSession();
+})();
+</script>
+</body>
+</html>
