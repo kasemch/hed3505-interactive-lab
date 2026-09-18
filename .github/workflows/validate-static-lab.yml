@@ -1,0 +1,45 @@
+name: Validate Static Learning Lab
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required files
+        shell: bash
+        run: |
+          set -e
+          required=(
+            "index.html"
+            "styles.css"
+            "app.js"
+            "README.md"
+            "legacy-live-smoke.html"
+          )
+          for f in "${required[@]}"; do
+            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
+          done
+          echo "PASS: required static lab files exist."
+      - name: Validate JavaScript syntax
+        run: node --check app.js
+      - name: Check five module labels
+        shell: bash
+        run: |
+          set -e
+          for n in 1 2 3 4 5; do
+            grep -q "id:$n" app.js || { echo "Missing module $n"; exit 1; }
+          done
+          grep -q "Prompt → Tap → Reveal → Discuss → Decide → Save" README.md
+          echo "PASS: five-module activity baseline detected."
+      - name: Privacy boundary check
+        shell: bash
+        run: |
+          if grep -Ei "student.?id|national.?id|passport" index.html app.js; then
+            echo "Review privacy-sensitive field reference."
+            exit 1
+          fi
+          echo "PASS: no student identity fields detected in learner UI."
