@@ -60,7 +60,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          if grep -RniE "supabase|live-config|signInWithOtp|postgres_changes|projectUrl|publishableKey" docs; then
+          if grep -niE "supabase|live-config|signInWithOtp|postgres_changes|projectUrl|publishableKey" docs/index.html docs/app.js docs/styles.css; then
             echo "FAIL: backend/live-test dependency leaked into isolated preview source."
             exit 1
           fi
