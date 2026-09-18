@@ -82,33 +82,48 @@ const modules = [
   }
 ];
 
-let currentModule=0,currentStep=0,selected={};
+let currentModule=0,currentStep=0;
+const moduleState=modules.map(()=>({selected:{},notes:""}));
+function state(){return moduleState[currentModule]}
 const $=s=>document.querySelector(s);
 const nav=$("#moduleNav"),intro=$("#moduleIntro"),interaction=$("#interaction");
 modules.forEach((m,i)=>{
   const b=document.createElement("button");b.className="module-btn";b.type="button";
-  b.textContent="M"+m.id+" · "+m.path;b.onclick=()=>{currentModule=i;currentStep=0;selected={};render();};
+  b.textContent="M"+m.id+" · "+m.path;
+  b.onclick=()=>{
+    moduleState[currentModule].notes=$("#notes").value;
+    currentModule=i;currentStep=0;
+    $("#notes").value=moduleState[currentModule].notes;
+    $("#stepStatus").textContent="";
+    $("#notes").addEventListener("input",()=>{state().notes=$("#notes").value});
+render();
+  };
   nav.appendChild(b);
 });
 
 function render(){
-  const m=modules[currentModule], step=m.steps[currentStep];
+  const m=modules[currentModule], step=m.steps[currentStep], selected=state().selected;
   [...nav.children].forEach((b,i)=>b.setAttribute("aria-current",i===currentModule?"true":"false"));
   intro.innerHTML='<p class="eyebrow">MODULE '+m.id+'</p><h2>'+m.title+'</h2><p><strong>'+m.path+'</strong></p><p class="muted">Progressive artifact: '+m.artifact+'</p>';
   $("#stepTitle").textContent=step[0];$("#progressText").textContent=(currentStep+1)+" / "+m.steps.length;
   $("#progressBar").style.width=((currentStep+1)/m.steps.length*100)+"%";
+  const track=document.querySelector(".progress-track");
+  track.setAttribute("aria-valuemax",String(m.steps.length));
+  track.setAttribute("aria-valuenow",String(currentStep+1));
   interaction.innerHTML='<h3>'+step[1]+'</h3><div class="option-list" id="opts"></div><div id="reveal" class="reveal hidden"></div>';
   step[2].forEach((opt,idx)=>{
     const b=document.createElement("button");b.type="button";b.className="option";b.textContent=opt;
+    b.setAttribute("aria-pressed","false");
     b.onclick=()=>{
       selected[currentStep]=opt;
-      [...$("#opts").children].forEach(x=>x.classList.remove("selected"));b.classList.add("selected");
+      [...$("#opts").children].forEach(x=>{x.classList.remove("selected");x.setAttribute("aria-pressed","false")});
+      b.classList.add("selected");b.setAttribute("aria-pressed","true");
       const r=$("#reveal");r.textContent=step[3];r.classList.remove("hidden");
     };
     $("#opts").appendChild(b);
   });
   if(selected[currentStep]){
-    [...$("#opts").children].forEach(b=>{if(b.textContent===selected[currentStep])b.classList.add("selected")});
+    [...$("#opts").children].forEach(b=>{if(b.textContent===selected[currentStep]){b.classList.add("selected");b.setAttribute("aria-pressed","true")}});
     $("#reveal").textContent=step[3];$("#reveal").classList.remove("hidden");
   }
   $("#prevBtn").disabled=currentStep===0;
@@ -118,6 +133,11 @@ function render(){
 $("#prevBtn").onclick=()=>{if(currentStep>0){currentStep--;render()}};
 $("#nextBtn").onclick=()=>{
   const m=modules[currentModule];
+  if(!state().selected[currentStep]){
+    $("#stepStatus").textContent="กรุณาเลือก/ยืนยันการตัดสินใจก่อนกดถัดไป";
+    return;
+  }
+  $("#stepStatus").textContent="";
   if(currentStep<m.steps.length-1){currentStep++;render()}
   else{$("#saveStatus").textContent="ครบกิจกรรม Module "+m.id+" แล้ว — บันทึก reasoning และ export "+m.artifact+" ได้ด้านล่าง"}
 };
@@ -131,8 +151,8 @@ function summary(){
     "",
     "## Interaction decisions"
   ];
-  m.steps.forEach((s,i)=>lines.push("- "+s[0]+": "+(selected[i]||"PENDING")));
-  lines.push("","## Reasoning / Evidence Notes",$("#notes").value||"PENDING",
+  m.steps.forEach((s,i)=>lines.push("- "+s[0]+": "+(state().selected[i]||"PENDING")));
+  lines.push("","## Reasoning / Evidence Notes",($("#notes").value||state().notes||"PENDING"),
     "","## Evidence Rule","Use approved case evidence only. Simulated IOC/Reliability data must be labeled INSTRUCTIONAL / SIMULATED DATA.");
   return lines.join("\n");
 }
