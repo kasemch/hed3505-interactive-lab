@@ -1,0 +1,82 @@
+name: Validate Static Learning Lab
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required core files
+        shell: bash
+        run: |
+          set -e
+          required=(
+            "index.html"
+            "styles.css"
+            "app.js"
+            "README.md"
+            "legacy-live-smoke.html"
+            "docs/index.html"
+            "docs/styles.css"
+            "docs/app.js"
+            "docs/PREVIEW-BOUNDARY.md"
+          )
+          for f in "${required[@]}"; do
+            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
+          done
+          echo "PASS: required core and isolated preview files exist."
+
+      - name: Validate JavaScript syntax
+        run: |
+          node --check app.js
+          node --check docs/app.js
+
+      - name: Check five module labels
+        shell: bash
+        run: |
+          set -e
+          for n in 1 2 3 4 5; do
+            grep -q "id:$n" app.js || { echo "Missing module $n in core app"; exit 1; }
+            grep -q "id:$n" docs/app.js || { echo "Missing module $n in preview app"; exit 1; }
+          done
+          grep -q "Prompt → Tap → Reveal → Discuss → Decide → Save" README.md
+          echo "PASS: five-module activity baseline detected."
+
+      - name: Privacy boundary check
+        shell: bash
+        run: |
+          set -e
+          if grep -Ei "national.?id|passport|student.?id.*input|name=.*student|email.*input|grade.*input" index.html app.js docs/index.html docs/app.js; then
+            echo "FAIL: review privacy-sensitive learner input reference."
+            exit 1
+          fi
+          echo "PASS: no obvious learner identity/grade input fields detected."
+
+      - name: Preview isolation check
+        shell: bash
+        run: |
+          set -e
+          if grep -niE "supabase|live-config|signInWithOtp|postgres_changes|projectUrl|publishableKey" docs/index.html docs/app.js docs/styles.css; then
+            echo "FAIL: backend/live-test dependency leaked into isolated preview source."
+            exit 1
+          fi
+          if find docs -type f -maxdepth 1 | grep -E "legacy-live-smoke|live-config"; then
+            echo "FAIL: legacy/live config file leaked into preview source."
+            exit 1
+          fi
+          echo "PASS: docs/ preview source is static-only and backend-independent."
+
+      - name: Preview parity check
+        shell: bash
+        run: |
+          set -e
+          cmp -s styles.css docs/styles.css || { echo "FAIL: preview styles diverge from approved core learner styles"; exit 1; }
+          cmp -s app.js docs/app.js || { echo "FAIL: preview app diverges from approved core learner app"; exit 1; }
+          grep -q "Prompt → Tap → Reveal → Discuss → Decide → Save" docs/index.html
+          grep -q "HED3505 Interactive Learning Lab" docs/index.html
+          grep -q "Static learner flow only" docs/index.html
+          echo "PASS: preview learner app/styles match core; preview index differs only by controlled-preview boundary messaging."
