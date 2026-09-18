@@ -34,9 +34,9 @@
         </div>
         <strong id="progressText">1 / 10</strong>
       </div>
-      <div class="progress-track" aria-hidden="true"><div id="progressBar"></div></div>
+      <div class="progress-track" role="progressbar" aria-label="ความคืบหน้าของโมดูล" aria-valuemin="1" aria-valuemax="10" aria-valuenow="1"><div id="progressBar"></div></div>
 
-      <div id="interaction"></div>
+      <div id="interaction" aria-live="polite"></div>
 
       <div class="actions">
         <button id="prevBtn" class="btn secondary" type="button">ย้อนกลับ</button>
@@ -53,6 +53,7 @@
         <button id="copyBtn" class="btn secondary" type="button">คัดลอกสรุป</button>
         <button id="downloadBtn" class="btn primary" type="button">บันทึกเป็น Markdown</button>
       </div>
+      <p id="stepStatus" class="status" role="status"></p>
       <p id="saveStatus" class="status" role="status"></p>
     </section>
 
