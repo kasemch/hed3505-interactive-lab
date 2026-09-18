@@ -27,3 +27,10 @@ footer{max-width:900px;margin:auto;padding:0 20px 40px;color:var(--muted);font-s
   .module-grid{grid-template-columns:repeat(2,1fr)}.module-btn:last-child{grid-column:span 2}.data-card{grid-template-columns:1fr}
   .actions.stack-mobile{flex-direction:column}.actions.stack-mobile .btn{width:100%}
 }
+
+button:focus-visible, textarea:focus-visible, a:focus-visible{
+  outline:3px solid #7c9cff;
+  outline-offset:3px;
+}
+button:disabled{opacity:.5;cursor:not-allowed}
+.option[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
