@@ -84,86 +84,177 @@ const modules = [
 
 let currentModule=0,currentStep=0;
 const moduleState=modules.map(()=>({selected:{},notes:""}));
-function state(){return moduleState[currentModule]}
+
+function state(){ return moduleState[currentModule]; }
+
 const $=s=>document.querySelector(s);
-const nav=$("#moduleNav"),intro=$("#moduleIntro"),interaction=$("#interaction");
+const nav=$("#moduleNav");
+const intro=$("#moduleIntro");
+const interaction=$("#interaction");
+
 modules.forEach((m,i)=>{
-  const b=document.createElement("button");b.className="module-btn";b.type="button";
+  const b=document.createElement("button");
+  b.className="module-btn";
+  b.type="button";
   b.textContent="M"+m.id+" · "+m.path;
   b.onclick=()=>{
-    moduleState[currentModule].notes=$("#notes").value;
-    currentModule=i;currentStep=0;
-    $("#notes").value=moduleState[currentModule].notes;
+    state().notes=$("#notes").value;
+    currentModule=i;
+    currentStep=0;
+    $("#notes").value=state().notes;
     $("#stepStatus").textContent="";
-    $("#notes").addEventListener("input",()=>{state().notes=$("#notes").value});
-render();
+    $("#saveStatus").textContent="";
+    render();
   };
   nav.appendChild(b);
 });
 
 function render(){
-  const m=modules[currentModule], step=m.steps[currentStep], selected=state().selected;
-  [...nav.children].forEach((b,i)=>b.setAttribute("aria-current",i===currentModule?"true":"false"));
-  intro.innerHTML='<p class="eyebrow">MODULE '+m.id+'</p><h2>'+m.title+'</h2><p><strong>'+m.path+'</strong></p><p class="muted">Progressive artifact: '+m.artifact+'</p>';
-  $("#stepTitle").textContent=step[0];$("#progressText").textContent=(currentStep+1)+" / "+m.steps.length;
+  const m=modules[currentModule];
+  const step=m.steps[currentStep];
+  const selected=state().selected;
+
+  [...nav.children].forEach((b,i)=>{
+    b.setAttribute("aria-current",i===currentModule?"true":"false");
+  });
+
+  intro.innerHTML=
+    '<p class="eyebrow">MODULE '+m.id+'</p>'+
+    '<h2>'+m.title+'</h2>'+
+    '<p><strong>'+m.path+'</strong></p>'+
+    '<p class="muted">Progressive artifact: '+m.artifact+'</p>';
+
+  $("#stepTitle").textContent=step[0];
+  $("#progressText").textContent=(currentStep+1)+" / "+m.steps.length;
   $("#progressBar").style.width=((currentStep+1)/m.steps.length*100)+"%";
+
   const track=document.querySelector(".progress-track");
   track.setAttribute("aria-valuemax",String(m.steps.length));
   track.setAttribute("aria-valuenow",String(currentStep+1));
-  interaction.innerHTML='<h3>'+step[1]+'</h3><div class="option-list" id="opts"></div><div id="reveal" class="reveal hidden"></div>';
-  step[2].forEach((opt,idx)=>{
-    const b=document.createElement("button");b.type="button";b.className="option";b.textContent=opt;
+
+  interaction.innerHTML=
+    '<h3>'+step[1]+'</h3>'+
+    '<div class="option-list" id="opts"></div>'+
+    '<div id="reveal" class="reveal hidden"></div>';
+
+  step[2].forEach(opt=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="option";
+    b.textContent=opt;
     b.setAttribute("aria-pressed","false");
     b.onclick=()=>{
       selected[currentStep]=opt;
-      [...$("#opts").children].forEach(x=>{x.classList.remove("selected");x.setAttribute("aria-pressed","false")});
-      b.classList.add("selected");b.setAttribute("aria-pressed","true");
-      const r=$("#reveal");r.textContent=step[3];r.classList.remove("hidden");
+      [...$("#opts").children].forEach(x=>{
+        x.classList.remove("selected");
+        x.setAttribute("aria-pressed","false");
+      });
+      b.classList.add("selected");
+      b.setAttribute("aria-pressed","true");
+      const r=$("#reveal");
+      r.textContent=step[3];
+      r.classList.remove("hidden");
+      $("#stepStatus").textContent="";
     };
     $("#opts").appendChild(b);
   });
+
   if(selected[currentStep]){
-    [...$("#opts").children].forEach(b=>{if(b.textContent===selected[currentStep]){b.classList.add("selected");b.setAttribute("aria-pressed","true")}});
-    $("#reveal").textContent=step[3];$("#reveal").classList.remove("hidden");
+    [...$("#opts").children].forEach(b=>{
+      if(b.textContent===selected[currentStep]){
+        b.classList.add("selected");
+        b.setAttribute("aria-pressed","true");
+      }
+    });
+    $("#reveal").textContent=step[3];
+    $("#reveal").classList.remove("hidden");
   }
+
   $("#prevBtn").disabled=currentStep===0;
   $("#nextBtn").textContent=currentStep===m.steps.length-1?"จบโมดูล":"ถัดไป";
 }
 
-$("#prevBtn").onclick=()=>{if(currentStep>0){currentStep--;render()}};
+$("#prevBtn").onclick=()=>{
+  state().notes=$("#notes").value;
+  if(currentStep>0){
+    currentStep--;
+    $("#stepStatus").textContent="";
+    render();
+  }
+};
+
 $("#nextBtn").onclick=()=>{
   const m=modules[currentModule];
+  state().notes=$("#notes").value;
+
   if(!state().selected[currentStep]){
     $("#stepStatus").textContent="กรุณาเลือก/ยืนยันการตัดสินใจก่อนกดถัดไป";
     return;
   }
+
   $("#stepStatus").textContent="";
-  if(currentStep<m.steps.length-1){currentStep++;render()}
-  else{$("#saveStatus").textContent="ครบกิจกรรม Module "+m.id+" แล้ว — บันทึก reasoning และ export "+m.artifact+" ได้ด้านล่าง"}
+  if(currentStep<m.steps.length-1){
+    currentStep++;
+    render();
+  }else{
+    $("#saveStatus").textContent=
+      "ครบกิจกรรม Module "+m.id+" แล้ว — บันทึก reasoning และ export "+m.artifact+" ได้ด้านล่าง";
+  }
 };
+
+$("#notes").addEventListener("input",()=>{
+  state().notes=$("#notes").value;
+});
 
 function summary(){
   const m=modules[currentModule];
-  const lines=["# HED3505 Learning Evidence","",
+  state().notes=$("#notes").value;
+
+  const lines=[
+    "# HED3505 Learning Evidence",
+    "",
     "Module: "+m.id+" — "+m.title,
     "Path: "+m.path,
     "Artifact: "+m.artifact,
     "",
     "## Interaction decisions"
   ];
-  m.steps.forEach((s,i)=>lines.push("- "+s[0]+": "+(state().selected[i]||"PENDING")));
-  lines.push("","## Reasoning / Evidence Notes",($("#notes").value||state().notes||"PENDING"),
-    "","## Evidence Rule","Use approved case evidence only. Simulated IOC/Reliability data must be labeled INSTRUCTIONAL / SIMULATED DATA.");
+
+  m.steps.forEach((s,i)=>{
+    lines.push("- "+s[0]+": "+(state().selected[i]||"PENDING"));
+  });
+
+  lines.push(
+    "",
+    "## Reasoning / Evidence Notes",
+    state().notes||"PENDING",
+    "",
+    "## Evidence Rule",
+    "Use approved case evidence only. Simulated IOC/Reliability data must be labeled INSTRUCTIONAL / SIMULATED DATA."
+  );
+
   return lines.join("\n");
 }
 
 $("#copyBtn").onclick=async()=>{
-  try{await navigator.clipboard.writeText(summary());$("#saveStatus").textContent="คัดลอกสรุปแล้ว";}
-  catch{ $("#saveStatus").textContent="ไม่สามารถคัดลอกอัตโนมัติได้ โปรดเลือกข้อความด้วยตนเอง"; }
+  try{
+    await navigator.clipboard.writeText(summary());
+    $("#saveStatus").textContent="คัดลอกสรุปแล้ว";
+  }catch{
+    $("#saveStatus").textContent="ไม่สามารถคัดลอกอัตโนมัติได้ โปรดใช้การบันทึกเป็น Markdown";
+  }
 };
+
 $("#downloadBtn").onclick=()=>{
-  const blob=new Blob([summary()],{type:"text/markdown;charset=utf-8"}),a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);a.download="HED3505-Module-"+modules[currentModule].id+"-Evidence.md";
-  a.click();URL.revokeObjectURL(a.href);$("#saveStatus").textContent="สร้างไฟล์ Markdown แล้ว";
+  const blob=new Blob([summary()],{type:"text/markdown;charset=utf-8"});
+  const a=document.createElement("a");
+  const url=URL.createObjectURL(blob);
+  a.href=url;
+  a.download="HED3505-Module-"+modules[currentModule].id+"-Evidence.md";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),0);
+  $("#saveStatus").textContent="สร้างไฟล์ Markdown แล้ว";
 };
+
+$("#notes").value=state().notes;
 render();
