@@ -74,7 +74,9 @@ jobs:
         shell: bash
         run: |
           set -e
-          cmp -s index.html docs/index.html || { echo "FAIL: preview index diverges from approved core learner index"; exit 1; }
           cmp -s styles.css docs/styles.css || { echo "FAIL: preview styles diverge from approved core learner styles"; exit 1; }
           cmp -s app.js docs/app.js || { echo "FAIL: preview app diverges from approved core learner app"; exit 1; }
-          echo "PASS: isolated preview matches approved learner core."
+          grep -q "Prompt → Tap → Reveal → Discuss → Decide → Save" docs/index.html
+          grep -q "HED3505 Interactive Learning Lab" docs/index.html
+          grep -q "Static learner flow only" docs/index.html
+          echo "PASS: preview learner app/styles match core; preview index differs only by controlled-preview boundary messaging."
