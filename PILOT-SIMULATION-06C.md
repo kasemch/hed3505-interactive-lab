@@ -111,8 +111,22 @@ Implemented:
 Condition:
 screen-reader/manual keyboard walkthrough should be repeated with a real browser during pilot onboarding.
 
-## Phase 06C preliminary verdict
+## CI and Pull Request closure
+
+- Validate Static Learning Lab: **SUCCESS**
+- Pull Request #1: **mergeable = true**
+- Mergeable state: **clean**
+- Pull Request remains: **DRAFT**
+
+## Phase 06C final verdict
 
 **PASS WITH MINOR NON-BLOCKING CONDITIONS**
 
 No open BLOCKER or HIGH defect remains after remediation.
+
+Remaining conditions:
+1. real-device visual walkthrough at pilot onboarding;
+2. manual keyboard / screen-reader walkthrough before real-student activation;
+3. no public Pages deployment until the controlled preview/promotion gate is explicitly cleared.
+
+These conditions do not invalidate the static digital activity architecture.
