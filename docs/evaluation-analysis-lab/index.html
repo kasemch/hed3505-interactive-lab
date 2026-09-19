@@ -45,33 +45,108 @@
 </section>
 
 <section id="lab3" class="panel hidden">
-  <h2>LAB 3 — Reliability Analysis</h2>
-  <p class="lead">เลือกวิธี reliability ให้ตรงกับเครื่องมือก่อน แล้วจึงคำนวณ/ตีความ</p>
+  <h2>LAB 3 — Reliability Investigation Lab</h2>
+  <p class="lead">ไม่เน้นแทนค่าสูตร แต่ให้เลือกวิธี อ่านผล สืบสวนข้อที่น่าสงสัย และตัดสินจากหลักฐานหลายชิ้น</p>
 
   <div class="card">
-    <h3>Step 1 · เลือกวิธี Reliability</h3>
+    <h3>Stage 1 · Choose the Method</h3>
     <div id="reliabilityScenarios"></div>
     <button onclick="checkReliabilityMethods()">ตรวจการเลือกวิธี</button>
     <div id="methodFeedback"></div>
   </div>
 
   <div class="card">
-    <h3>Step 2 · Cronbach’s alpha</h3>
-    <p>ชุดข้อมูล: Likert 5 ข้อ, 12 คน</p>
-    <details><summary>ดูข้อมูลทดลองใช้</summary><div id="relData"></div></details>
-    <details><summary>สูตร Cronbach’s alpha</summary>
-      <div class="formula">α = k/(k−1) × [1 − Σσ²ᵢ / σ²ₜ]</div>
-    </details>
-    <label>กรอกค่า alpha ที่คำนวณได้
-      <input id="alphaInput" inputmode="decimal" placeholder="เช่น 0.90">
+    <h3>Stage 2 · Predict Before Reveal</h3>
+    <label>ก่อนเห็นผล คุณคาดว่า reliability จะเป็นอย่างไร?
+      <select id="relPrediction">
+        <option value="">เลือก</option>
+        <option>HIGH</option>
+        <option>MODERATE</option>
+        <option>LOW</option>
+        <option>NOT ENOUGH INFORMATION</option>
+      </select>
     </label>
-    <label>ค่า alpha นี้สนับสนุนข้อสรุปใด?
+    <label>เหตุผล
+      <textarea id="relPredictionReason"></textarea>
+    </label>
+  </div>
+
+  <div class="card">
+    <h3>Stage 3 · Read the Output</h3>
+    <div class="formula">Cronbach’s alpha = 0.90</div>
+    <label>ค่านี้สนับสนุนข้อสรุปใด?
       <textarea id="alphaMeaning"></textarea>
     </label>
-    <label>ค่า alpha นี้ยัง “ไม่สามารถ” ยืนยันอะไร?
+    <label>ค่านี้ยัง “ไม่สามารถ” ยืนยันอะไร?
       <textarea id="alphaLimit"></textarea>
     </label>
-    <button onclick="checkAlpha()">ตรวจและตีความ</button>
+  </div>
+
+  <div class="card">
+    <h3>Stage 4 · Investigate Items</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Item</th><th>Corrected item-total correlation</th><th>Alpha if item deleted</th></tr></thead>
+        <tbody>
+          <tr><td>I1</td><td>.62</td><td>.88</td></tr>
+          <tr><td>I2</td><td>.58</td><td>.89</td></tr>
+          <tr><td><strong>I3</strong></td><td><strong>.14</strong></td><td><strong>.94</strong></td></tr>
+          <tr><td>I4</td><td>.66</td><td>.87</td></tr>
+          <tr><td>I5</td><td>.61</td><td>.88</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <label>ข้อใดควรตรวจสอบเพิ่มเติม?
+      <select id="suspectItem">
+        <option value="">เลือก</option><option>I1</option><option>I2</option><option>I3</option><option>I4</option><option>I5</option>
+      </select>
+    </label>
+    <label>เพราะเหตุใด?
+      <textarea id="suspectReason"></textarea>
+    </label>
+  </div>
+
+  <div class="card">
+    <h3>Stage 5 · Evidence Conflict</h3>
+    <p class="note"><strong>Evidence Card ใหม่:</strong> IOC ของ I3 = 1.00 และผู้เชี่ยวชาญระบุว่า I3 เป็นองค์ประกอบสำคัญของ construct</p>
+    <label>ควรลบ I3 ทันทีหรือไม่?
+      <select id="deleteI3">
+        <option value="">เลือก</option>
+        <option>DELETE NOW</option>
+        <option>DO NOT DELETE YET</option>
+        <option>NOT ENOUGH EVIDENCE</option>
+      </select>
+    </label>
+    <label>อธิบายโดยใช้หลักฐานอย่างน้อย 2 ชิ้น
+      <textarea id="conflictReason"></textarea>
+    </label>
+  </div>
+
+  <div class="card">
+    <h3>Stage 6 · Reliability Mystery</h3>
+    <p><strong>Claim:</strong> “Alpha = .91 ดังนั้นเครื่องมือนี้มีความตรงสูงและพร้อมใช้ทันที”</p>
+    <label>ประเมินข้ออ้างนี้
+      <select id="mysteryDecision">
+        <option value="">เลือก</option>
+        <option>AGREE</option>
+        <option>DISAGREE</option>
+        <option>NOT ENOUGH EVIDENCE</option>
+      </select>
+    </label>
+    <label>เหตุผล
+      <textarea id="mysteryReason"></textarea>
+    </label>
+  </div>
+
+  <div class="card">
+    <h3>Stage 7 · Final Evaluation-Team Challenge</h3>
+    <p>Evidence: IOC=.86 · Alpha=.90 · I3 item-total=.14 · Alpha if I3 deleted=.94 · Expert says I3 is conceptually important</p>
+    <label>Decision<textarea id="finalDecision"></textarea></label>
+    <label>Evidence 1<textarea id="finalEvidence1"></textarea></label>
+    <label>Evidence 2<textarea id="finalEvidence2"></textarea></label>
+    <label>Risk / Uncertainty<textarea id="finalRisk"></textarea></label>
+    <label>Next Action<textarea id="finalAction"></textarea></label>
+    <button onclick="checkReliabilityChallenge()">ตรวจความครบถ้วนของเหตุผล</button>
     <div id="alphaFeedback"></div>
   </div>
 </section>
