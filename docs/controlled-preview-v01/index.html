@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HED3505 Controlled Preview v0.1</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>HED3505 — การประเมินโปรแกรมสุขภาพในโรงเรียน</h1>
+  <p>Controlled Preview v0.1 · Master Case: โรงเรียนอรุณพัฒนา</p>
+</header>
+<main>
+<section class="hero">
+  <span class="badge">NON-PRODUCTION</span>
+  <h2>Evidence-Based Evaluation Learning Hub</h2>
+  <p>คิดจากหลักฐาน แยกข้อเท็จจริงออกจากการตีความ และไม่สรุปสาเหตุเกินข้อมูล</p>
+</section>
+
+<nav class="tabs" aria-label="กิจกรรม">
+  <button data-go="a1">A1</button><button data-go="a2">A2</button><button data-go="b1">B1</button><button data-go="b2">B2</button><button data-go="b3">B3</button><button data-go="portfolio">Portfolio</button>
+</nav>
+
+<section id="a1" class="panel">
+<h2>A1 — Evidence Classification</h2>
+<p>จัดข้อความเป็น Measurement / Assessment / Evaluation</p>
+<div class="item"><b>นักเรียนนอนน้อยกว่า 7 ชั่วโมง = 44%</b><select data-a1="0"><option value="">เลือก</option><option>Measurement</option><option>Assessment</option><option>Evaluation</option></select></div>
+<div class="item"><b>CPR Performance Pass = 38%</b><select data-a1="1"><option value="">เลือก</option><option>Measurement</option><option>Assessment</option><option>Evaluation</option></select></div>
+<div class="item"><b>38% ต่ำกว่าเป้าหมาย 70%</b><select data-a1="2"><option value="">เลือก</option><option>Measurement</option><option>Assessment</option><option>Evaluation</option></select></div>
+<div class="item"><b>เมื่อพิจารณาเกณฑ์และบริบท ควรทบทวนกระบวนการฝึกปฏิบัติ</b><select data-a1="3"><option value="">เลือก</option><option>Measurement</option><option>Assessment</option><option>Evaluation</option></select></div>
+<label>เหตุผล<textarea id="a1reason"></textarea></label>
+<button onclick="checkA1()">Check</button><div id="a1fb"></div>
+</section>
+
+<section id="a2" class="panel hidden">
+<h2>A2 — Baseline Interpretation</h2>
+<div class="warn">Do not invent causes.</div>
+<p>เลือก 3 ตัวชี้วัด</p>
+<div id="indicators"></div>
+<label>WHAT DO WE KNOW?<textarea id="a2know"></textarea></label>
+<label>WHAT EVIDENCE IS MISSING?<textarea id="a2missing"></textarea></label>
+<label>WHAT CAN WE RESPONSIBLY CONCLUDE?<textarea id="a2conclusion"></textarea></label>
+<button onclick="finishA2()">Evidence Preview</button><div id="a2fb"></div>
+</section>
+
+<section id="b1" class="panel hidden">
+<h2>B1 — CPR Evidence Puzzle</h2>
+<div class="cards"><div><b>Knowledge Pass</b><strong>81%</strong></div><div><b>Performance Pass</b><strong>38%</strong></div><div><b>Satisfaction</b><strong>4.3/5</strong></div></div>
+<div class="warn">Possible explanation ≠ Confirmed cause</div>
+<label>WHAT THE EVIDENCE SUPPORTS<textarea id="b1sup"></textarea></label>
+<label>WHAT THE EVIDENCE DOES NOT YET SUPPORT<textarea id="b1not"></textarea></label>
+<label>WHAT SHOULD BE INVESTIGATED NEXT<textarea id="b1next"></textarea></label>
+<button onclick="finishB1()">Evidence Preview</button><div id="b1fb"></div>
+</section>
+
+<section id="b2" class="panel hidden">
+<h2>B2 — Claim Sorting</h2>
+<div id="b2items"></div>
+<label>Why? เหตุผลของคุณ<textarea id="b2why"></textarea></label>
+<button onclick="checkB2()">Check</button><div id="b2fb"></div>
+</section>
+
+<section id="b3" class="panel hidden">
+<h2>B3 — Present & Challenge</h2>
+<label>Group Name<input id="group"></label>
+<label>1 CLAIM<textarea id="claim"></textarea></label>
+<label>EVIDENCE 1<textarea id="e1"></textarea></label>
+<label>EVIDENCE 2<textarea id="e2"></textarea></label>
+<label>1 MISSING EVIDENCE<textarea id="missing"></textarea></label>
+<label>1 RECOMMENDATION<textarea id="rec"></textarea></label>
+<button onclick="finishB3()">Presentation Summary</button><div id="b3fb"></div>
+</section>
+
+<section id="portfolio" class="panel hidden">
+<h2>Student Portfolio</h2><div id="progress"></div>
+<p class="small">สถานะเก็บใน browser ของอุปกรณ์นี้เท่านั้น ไม่มี backend และไม่มีการส่งข้อมูลสุขภาพส่วนบุคคลขึ้น server</p>
+</section>
+</main>
+<script src="app.js"></script>
+</body></html>
