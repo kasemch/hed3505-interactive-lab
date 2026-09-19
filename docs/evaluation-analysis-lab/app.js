@@ -21,7 +21,7 @@ const labLabels=[
   ["lab5","LAB 5","Judgment"]
 ];
 
-function validStudentId(v){return /^\\d{6,15}$/.test((v||"").trim())}
+function validStudentId(v){return /^\d{6,15}$/.test((v||"").trim())}
 function maskStudentId(v){
   v=(v||"").trim();
   if(v.length<=4)return v;
