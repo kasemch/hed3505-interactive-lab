@@ -59,6 +59,7 @@
   <button data-show="lab4">LAB 4 · Statistics</button>
   <button data-show="lab5">LAB 5 · Judgment</button>
   <button data-show="evidence">Evidence</button>
+  <button id="congratsNav" class="hidden" data-show="congratulations">🎉 Congratulations</button>
 </nav>
 
 <section id="lab1" class="panel">
@@ -344,6 +345,38 @@
     <button class="ghost" onclick="downloadEvidence()">Download .md</button>
   </div>
   <pre id="evidencePreview"></pre>
+</section>
+
+<section id="congratulations" class="panel hidden congrats-panel">
+  <div class="confetti-line" aria-hidden="true">✦ ✧ ★ ✦ ✧ ★ ✦</div>
+  <p class="eyebrow dark">HED3505 · JOURNEY COMPLETE</p>
+  <h2>🎉 Congratulations!</h2>
+  <p class="congrats-name" id="congratsName">คุณทำครบทั้ง 5 LAB แล้ว</p>
+  <p>คุณสำเร็จกิจกรรม <strong>HED3505 Evaluation Analysis Lab</strong> ครบทั้ง 5 LAB และสามารถสร้างหลักฐานการเรียนรู้ของตนเองได้แล้ว</p>
+
+  <div class="achievement-strip" aria-label="Completed lab badges">
+    <div><span>✓</span><strong>LAB 1</strong><small>Blueprint</small></div>
+    <div><span>✓</span><strong>LAB 2</strong><small>IOC</small></div>
+    <div><span>✓</span><strong>LAB 3</strong><small>Reliability</small></div>
+    <div><span>✓</span><strong>LAB 4</strong><small>Statistics</small></div>
+    <div><span>✓</span><strong>LAB 5</strong><small>Judgment</small></div>
+  </div>
+
+  <div class="reward-card">
+    <div class="reward-medal">🏅</div>
+    <div>
+      <h3>HED3505 Evidence-Based Evaluator — Foundation</h3>
+      <p>Completion reward สำหรับการสำเร็จกิจกรรมการเรียนรู้ในรายวิชา</p>
+      <p class="certificate-meta" id="certificateMeta"></p>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a class="button-link" href="certificate.html" target="_blank" rel="noopener">เปิด Certificate</a>
+    <button class="ghost" onclick="renderEvidence();showPanel('evidence')">ดู Evidence Portfolio</button>
+  </div>
+
+  <p class="note"><strong>หมายเหตุ:</strong> Certificate นี้รับรองการสำเร็จกิจกรรมการเรียนรู้ในรายวิชา ไม่ใช่ใบรับรองวิชาชีพ</p>
 </section>
 
 <section class="panel student-session">
