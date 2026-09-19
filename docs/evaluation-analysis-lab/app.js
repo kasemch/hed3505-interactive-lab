@@ -34,13 +34,32 @@ function checkIOC(){saveIOC();let s=load("ioc",{}),correct=0; iocRows.forEach((r
 function renderReliability(){
  const sc=[["a","Multi-item Likert scale"],["b","Dichotomous 0/1 knowledge test"],["c","Multiple assessors scoring performance"],["d","Same instrument at two time points"]];
  reliabilityScenarios.innerHTML=sc.map(([id,t])=>'<label>'+t+'<select id="m_'+id+'"><option value="">เลือก</option>'+Object.values(methodKey).map(x=>'<option>'+x+'</option>').join('')+'</select></label>').join('');
- const t='<div class="table-wrap"><table><thead><tr><th>Resp</th><th>I1</th><th>I2</th><th>I3</th><th>I4</th><th>I5</th></tr></thead><tbody>'+relData.map((r,i)=>'<tr><td>'+(i+1)+'</td>'+r.map(v=>'<td>'+v+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'; relDataEl=document.getElementById("relData"); relDataEl.innerHTML=t;
- let s=load("rel",{});["a","b","c","d"].forEach(id=>{document.getElementById("m_"+id).value=s["m_"+id]??"";document.getElementById("m_"+id).onchange=saveRel});
- ["alphaInput","alphaMeaning","alphaLimit"].forEach(id=>{document.getElementById(id).value=s[id]??"";document.getElementById(id).oninput=saveRel});
+ let s=load("rel",{});
+ ["a","b","c","d"].forEach(id=>{document.getElementById("m_"+id).value=s["m_"+id]??"";document.getElementById("m_"+id).onchange=saveRel});
+ ["relPrediction","relPredictionReason","alphaMeaning","alphaLimit","suspectItem","suspectReason","deleteI3","conflictReason","mysteryDecision","mysteryReason","finalDecision","finalEvidence1","finalEvidence2","finalRisk","finalAction"].forEach(id=>{let el=document.getElementById(id);if(el){el.value=s[id]??"";el.oninput=saveRel;el.onchange=saveRel}});
 }
-function saveRel(){let s={};["a","b","c","d"].forEach(id=>s["m_"+id]=document.getElementById("m_"+id).value);["alphaInput","alphaMeaning","alphaLimit"].forEach(id=>s[id]=document.getElementById(id).value);save("rel",s)}
-function checkReliabilityMethods(){saveRel();let s=load("rel",{}),c=0;["a","b","c","d"].forEach(id=>{if(s["m_"+id]===methodKey[id])c++});methodFeedback.innerHTML='<div class="'+(c===4?'good':'note')+'">เลือกถูก '+c+'/4 สถานการณ์ — เลือกวิธีให้ตรงกับโครงสร้างเครื่องมือและชนิดข้อมูลก่อนคำนวณ</div>'}
-function checkAlpha(){saveRel();let s=load("rel",{});let ok=Math.abs(Number(s.alphaInput)-0.9019)<.015;alphaFeedback.innerHTML='<div class="'+(ok?'good':'note')+'">'+(ok?'ค่า alpha สอดคล้องกับชุดข้อมูล (≈ 0.902)':'ลองตรวจ item variances, total-score variance และจำนวนข้อ k=5')+'<br><strong>จำไว้:</strong> High reliability ≠ high validity</div>'}
+function saveRel(){
+ let s={};
+ ["a","b","c","d"].forEach(id=>s["m_"+id]=document.getElementById("m_"+id).value);
+ ["relPrediction","relPredictionReason","alphaMeaning","alphaLimit","suspectItem","suspectReason","deleteI3","conflictReason","mysteryDecision","mysteryReason","finalDecision","finalEvidence1","finalEvidence2","finalRisk","finalAction"].forEach(id=>{let el=document.getElementById(id);if(el)s[id]=el.value});
+ save("rel",s)
+}
+function checkReliabilityMethods(){
+ saveRel();let s=load("rel",{}),c=0;
+ ["a","b","c","d"].forEach(id=>{if(s["m_"+id]===methodKey[id])c++});
+ methodFeedback.innerHTML='<div class="'+(c===4?'good':'note')+'">เลือกถูก '+c+'/4 สถานการณ์ — ต้องเลือกวิธีให้ตรงกับชนิดเครื่องมือและข้อมูลก่อนอ่านค่าความเที่ยง</div>'
+}
+function checkReliabilityChallenge(){
+ saveRel();let s=load("rel",{});
+ let score=0,notes=[];
+ if(s.suspectItem==="I3"){score++;} else notes.push("ตรวจ item-total correlation และ alpha if item deleted อีกครั้ง");
+ if(s.deleteI3==="DO NOT DELETE YET"||s.deleteI3==="NOT ENOUGH EVIDENCE"){score++;} else notes.push("อย่าตัดสินลบข้อคำถามจาก alpha อย่างเดียว");
+ if(s.mysteryDecision==="DISAGREE"||s.mysteryDecision==="NOT ENOUGH EVIDENCE"){score++;} else notes.push("alpha สูงไม่ใช่หลักฐานยืนยัน validity ทั้งหมด");
+ const required=["alphaMeaning","alphaLimit","suspectReason","conflictReason","mysteryReason","finalDecision","finalEvidence1","finalEvidence2","finalRisk","finalAction"];
+ let filled=required.filter(k=>(s[k]||"").trim().length>=8).length;
+ if(filled>=8)score++;
+ alphaFeedback.innerHTML='<div class="'+(score>=3?'good':'note')+'">Challenge score '+score+'/4'+(notes.length?'<br>'+notes.join('<br>'):'<br>เหตุผลมีทิศทางสอดคล้องกับการใช้หลักฐานหลายแหล่ง')+'<br><strong>Key idea:</strong> Reliability evidence และ validity evidence ตอบคำถามคนละด้าน</div>'
+}
 
 function renderStats(){
  statsDataEl=document.getElementById("statsData");statsDataEl.innerHTML='<div class="table-wrap"><table><thead><tr><th>Learner</th><th>Pre</th><th>Post</th></tr></thead><tbody>'+statsData.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</tbody></table></div>';
