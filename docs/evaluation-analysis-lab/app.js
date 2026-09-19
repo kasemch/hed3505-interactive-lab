@@ -62,6 +62,63 @@ function isLabComplete(key){
   if(key==="lab5")return ["lab5Fact","lab5Interpret","lab5Judgment","lab5Recommendation","lab5Missing","lab5Need"].every(k=>String(x[k]??"").trim()!=="");
   return false;
 }
+function allLabsComplete(){
+  return labLabels.every(([key])=>isLabComplete(key));
+}
+function hashText(s){
+  let h=2166136261;
+  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}
+  return (h>>>0).toString(36).toUpperCase().padStart(7,"0").slice(0,7);
+}
+function ensureCompletionRecord(){
+  if(!allLabsComplete()) return null;
+  let rec=load("completion",null);
+  const learner=getLearner()||{};
+  if(!rec){
+    const now=new Date();
+    const dateISO=now.toISOString().slice(0,10);
+    rec={
+      completed_at:now.toISOString(),
+      completion_date:dateISO,
+      certificate_id:"HED3505-"+dateISO.replaceAll("-","")+"-"+hashText((learner.student_id||"")+"|"+dateISO)
+    };
+    save("completion",rec);
+  }
+  return rec;
+}
+function formatThaiDate(iso){
+  if(!iso)return "-";
+  const d=new Date(iso+"T00:00:00");
+  try{return new Intl.DateTimeFormat("th-TH",{day:"numeric",month:"long",year:"numeric"}).format(d)}
+  catch(e){return iso}
+}
+function renderCongratulations(){
+  const learner=getLearner()||{},rec=ensureCompletionRecord();
+  if(!rec)return;
+  const n=document.getElementById("congratsName");
+  const m=document.getElementById("certificateMeta");
+  if(n)n.textContent="ยินดีด้วย "+(learner.display_name||"")+" — คุณทำครบทั้ง 5 LAB แล้ว";
+  if(m)m.textContent="Completion Date: "+formatThaiDate(rec.completion_date)+" · Certificate ID: "+rec.certificate_id;
+  const nav=document.getElementById("congratsNav"); if(nav)nav.classList.remove("hidden");
+}
+function showPanel(id){
+  document.querySelectorAll(".panel").forEach(x=>{
+    if(!x.classList.contains("dashboard")&&!x.classList.contains("student-session"))x.classList.add("hidden");
+  });
+  const el=document.getElementById(id); if(el)el.classList.remove("hidden");
+  if(id==="congratulations")renderCongratulations();
+}
+function maybeCelebrate(previousDone){
+  if(!allLabsComplete())return;
+  const first=!load("celebrated",false);
+  renderCongratulations();
+  if(first){
+    save("celebrated",true);
+    showPanel("congratulations");
+    window.scrollTo({top:document.getElementById("congratulations").offsetTop-14,behavior:"smooth"});
+  }
+}
+
 function renderDashboard(){
   const learner=getLearner(); if(!learner)return;
   document.getElementById("welcomeName").textContent="สวัสดี "+learner.display_name;
@@ -78,6 +135,7 @@ function renderDashboard(){
   document.getElementById("progressCards").innerHTML=cards;
   document.getElementById("progressText").textContent="Progress: "+done+"/5 LABs";
   document.getElementById("progressRing").textContent=done+"/5";
+  if(done===5)renderCongratulations();
   document.querySelectorAll(".progress-card").forEach(b=>b.onclick=()=>{
     document.querySelectorAll(".panel").forEach(x=>{
       if(!x.classList.contains("dashboard")&&!x.classList.contains("student-session"))x.classList.add("hidden");
@@ -108,7 +166,7 @@ function bootLearnerGate(){
 function load(k,f={}){try{return JSON.parse(localStorage.getItem(P+k))??f}catch(e){return f}}
 function save(k,v){localStorage.setItem(P+k,JSON.stringify(v))}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
-document.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{document.querySelectorAll(".panel").forEach(x=>x.classList.add("hidden"));document.getElementById(b.dataset.show).classList.remove("hidden")});
+document.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>showPanel(b.dataset.show));
 
 function renderLab1(){
  let s=load("lab1",{});
@@ -127,7 +185,7 @@ function checkLab1(){
  if(s.lab1Evidence==="คะแนนการปฏิบัติ")score++;else notes.push("Evidence ต้องตรงกับทักษะที่ต้องการประเมิน");
  if(s.lab1Instrument==="Performance checklist")score++;else notes.push("Performance ควรใช้เครื่องมือที่สังเกตการปฏิบัติ");
  if(s.lab1Claim==="NOT SUFFICIENT")score++;else notes.push("Satisfaction ไม่เพียงพอสำหรับสรุป performance");
- lab1Feedback.innerHTML='<div class="'+(score===4?'good':'note')+'">Alignment score '+score+'/4'+(notes.length?'<br>'+notes.join('<br>'):'<br>EQ → Indicator → Evidence → Instrument สอดคล้องกัน')+'</div>'
+ lab1Feedback.innerHTML='<div class="'+(score===4?'good':'note')+'">Alignment score '+score+'/4'+(notes.length?'<br>'+notes.join('<br>'):'<br>EQ → Indicator → Evidence → Instrument สอดคล้องกัน')+'</div>'; maybeCelebrate()
 }
 
 
@@ -143,7 +201,7 @@ function renderIOC(){
  iocReason.value=s.reason??""; iocReason.oninput=saveIOC;
 }
 function saveIOC(){let s={reason:iocReason.value};iocRows.forEach((r,i)=>{s["sum"+i]=document.querySelector('[data-sum="'+i+'"]').value;s["ioc"+i]=document.querySelector('[data-ioc="'+i+'"]').value;s["dec"+i]=document.querySelector('[data-dec="'+i+'"]').value});save("ioc",s); if(getLearner())renderDashboard()}
-function checkIOC(){saveIOC();let s=load("ioc",{}),correct=0; iocRows.forEach((r,i)=>{if(Number(s["sum"+i])===r.sum && Math.abs(Number(s["ioc"+i])-r.ioc)<.011)correct++});iocFeedback.innerHTML='<div class="'+(correct===5?'good':'note')+'">คำนวณถูก '+correct+'/5 ข้อ '+(correct<5?'ตรวจ ΣR ก่อน แล้วหารด้วยจำนวนผู้เชี่ยวชาญ 5 คน':'จากนี้ให้พิจารณา decision และเหตุผล ไม่ใช่ดูตัวเลขเพียงอย่างเดียว')+'</div>'}
+function checkIOC(){saveIOC();let s=load("ioc",{}),correct=0; iocRows.forEach((r,i)=>{if(Number(s["sum"+i])===r.sum && Math.abs(Number(s["ioc"+i])-r.ioc)<.011)correct++});iocFeedback.innerHTML='<div class="'+(correct===5?'good':'note')+'">คำนวณถูก '+correct+'/5 ข้อ '+(correct<5?'ตรวจ ΣR ก่อน แล้วหารด้วยจำนวนผู้เชี่ยวชาญ 5 คน':'จากนี้ให้พิจารณา decision และเหตุผล ไม่ใช่ดูตัวเลขเพียงอย่างเดียว')+'</div>'; maybeCelebrate()}
 
 function renderReliability(){
  const sc=[["a","Multi-item Likert scale"],["b","Dichotomous 0/1 knowledge test"],["c","Multiple assessors scoring performance"],["d","Same instrument at two time points"]];
@@ -172,7 +230,7 @@ function checkReliabilityChallenge(){
  const required=["alphaMeaning","alphaLimit","suspectReason","conflictReason","mysteryReason","finalDecision","finalEvidence1","finalEvidence2","finalRisk","finalAction"];
  let filled=required.filter(k=>(s[k]||"").trim().length>=8).length;
  if(filled>=8)score++;
- alphaFeedback.innerHTML='<div class="'+(score>=3?'good':'note')+'">Challenge score '+score+'/4'+(notes.length?'<br>'+notes.join('<br>'):'<br>เหตุผลมีทิศทางสอดคล้องกับการใช้หลักฐานหลายแหล่ง')+'<br><strong>Key idea:</strong> Reliability evidence และ validity evidence ตอบคำถามคนละด้าน</div>'
+ alphaFeedback.innerHTML='<div class="'+(score>=3?'good':'note')+'">Challenge score '+score+'/4'+(notes.length?'<br>'+notes.join('<br>'):'<br>เหตุผลมีทิศทางสอดคล้องกับการใช้หลักฐานหลายแหล่ง')+'<br><strong>Key idea:</strong> Reliability evidence และ validity evidence ตอบคำถามคนละด้าน</div>'; maybeCelebrate()
 }
 
 function renderStats(){
@@ -181,7 +239,7 @@ function renderStats(){
 }
 function saveStats(){let s={};["preMean","preSD","postMean","postSD","meanChange","statResult","statInterpret","statLimit","causalDecision","causalReason"].forEach(id=>s[id]=document.getElementById(id).value);save("stats",s); if(getLearner())renderDashboard()}
 function near(v,t,tol=.03){return Math.abs(Number(v)-t)<=tol}
-function checkStats(){saveStats();let s=load("stats",{});let c=0;if(near(s.preMean,6,.01))c++;if(near(s.preSD,1.13,.04))c++;if(near(s.postMean,7.92,.04))c++;if(near(s.postSD,.79,.04))c++;if(near(s.meanChange,1.92,.04))c++;let causalOK=(s.causalDecision==='OVERSTATED'||s.causalDecision==='NOT ENOUGH EVIDENCE');statsFeedback.innerHTML='<div class="'+(c===5&&causalOK?'good':'note')+'">ค่าพรรณนาถูก '+c+'/5 ค่า'+(c===5?'':' — ตรวจ mean และ sample SD อีกครั้ง')+'<br>Causal reasoning: '+(causalOK?'ผ่าน — ไม่สรุปเหตุเกินหลักฐาน':'ทบทวน Evaluation Design และ alternative explanations')+'<br><strong>ข้อควรระวัง:</strong> pre–post change แสดงการเปลี่ยนแปลง แต่ยังไม่เพียงพอที่จะยืนยัน causal effect ของโปรแกรม</div>'}
+function checkStats(){saveStats();let s=load("stats",{});let c=0;if(near(s.preMean,6,.01))c++;if(near(s.preSD,1.13,.04))c++;if(near(s.postMean,7.92,.04))c++;if(near(s.postSD,.79,.04))c++;if(near(s.meanChange,1.92,.04))c++;let causalOK=(s.causalDecision==='OVERSTATED'||s.causalDecision==='NOT ENOUGH EVIDENCE');statsFeedback.innerHTML='<div class="'+(c===5&&causalOK?'good':'note')+'">ค่าพรรณนาถูก '+c+'/5 ค่า'+(c===5?'':' — ตรวจ mean และ sample SD อีกครั้ง')+'<br>Causal reasoning: '+(causalOK?'ผ่าน — ไม่สรุปเหตุเกินหลักฐาน':'ทบทวน Evaluation Design และ alternative explanations')+'<br><strong>ข้อควรระวัง:</strong> pre–post change แสดงการเปลี่ยนแปลง แต่ยังไม่เพียงพอที่จะยืนยัน causal effect ของโปรแกรม</div>'; maybeCelebrate()}
 
 
 function renderLab5(){
@@ -194,10 +252,10 @@ function saveLab5(){let s={};["lab5Fact","lab5Interpret","lab5Judgment","lab5Rec
 function checkLab5(){
  saveLab5();let s=load("lab5",{}),fields=["lab5Fact","lab5Interpret","lab5Judgment","lab5Recommendation","lab5Missing","lab5Need"];
  let filled=fields.filter(k=>(s[k]||"").trim().length>=12).length;
- lab5Feedback.innerHTML='<div class="'+(filled===6?'good':'note')+'">Reasoning components completed '+filled+'/6'+(filled===6?'<br>ตรวจต่อว่า Recommendation เชื่อมกับ Judgment และไม่เดาสาเหตุเกินหลักฐาน':'<br>เติม Fact → Interpretation → Judgment → Recommendation และ Missing Evidence ให้ครบ')+'</div>'
+ lab5Feedback.innerHTML='<div class="'+(filled===6?'good':'note')+'">Reasoning components completed '+filled+'/6'+(filled===6?'<br>ตรวจต่อว่า Recommendation เชื่อมกับ Judgment และไม่เดาสาเหตุเกินหลักฐาน':'<br>เติม Fact → Interpretation → Judgment → Recommendation และ Missing Evidence ให้ครบ')+'</div>'; maybeCelebrate()
 }
 
-function resetLab(k){if(confirm("ล้างคำตอบของ Lab นี้ในอุปกรณ์นี้?")){localStorage.removeItem(P+k);location.reload()}}
+function resetLab(k){if(confirm("ล้างคำตอบของ Lab นี้ในอุปกรณ์นี้?")){localStorage.removeItem(P+k);localStorage.removeItem(P+"completion");localStorage.removeItem(P+"celebrated");location.reload()}}
 function evidenceText(){
  let learner=getLearner()||{},l1=load("lab1",{}),i=load("ioc",{}),r=load("rel",{}),s=load("stats",{}),l5=load("lab5",{});
  return '# HED3505 Evaluation Analysis Lab Evidence\n\nStudent ID: '+(learner.student_id??"-")+'\nDisplay Name: '+(learner.display_name??"-")+'\nGenerated: '+new Date().toISOString()+'\n\n'
