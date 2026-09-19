@@ -16,10 +16,43 @@
 </header>
 
 <main class="wrap">
+<section id="checkinGate" class="panel checkin-panel">
+  <p class="eyebrow dark">HED3505 · LEARNER CHECK-IN</p>
+  <h2>เข้าสู่ Evaluation Analysis Lab</h2>
+  <p>กรอกรหัสนักศึกษา ชื่อที่ใช้แสดงผล และ Section เพื่อสร้าง session บนอุปกรณ์นี้</p>
+  <p class="note"><strong>หมายเหตุ:</strong> นี่คือ Learner Identification สำหรับ Controlled Preview ไม่ใช่ระบบ Authentication และข้อมูลจะเก็บไว้ใน browser นี้เท่านั้น</p>
+  <div class="grid two">
+    <label>รหัสนักศึกษา
+      <input id="studentId" inputmode="numeric" autocomplete="off" placeholder="เช่น 6612345678">
+    </label>
+    <label>ชื่อที่ใช้แสดงผล
+      <input id="displayName" autocomplete="name" placeholder="ชื่อเล่น หรือ ชื่อ-นามสกุล">
+    </label>
+  </div>
+  <label>Section / กลุ่มเรียน
+    <input id="sectionName" autocomplete="off" placeholder="เช่น 01">
+  </label>
+  <div class="actions"><button onclick="enterLab()">เข้าสู่ห้องปฏิบัติการ</button></div>
+  <div id="checkinFeedback"></div>
+</section>
+
+<section id="labApp" class="hidden">
 <section class="hero">
   <span class="badge">Synthetic teaching data</span>
   <h2>ฝึกคำนวณ ตีความ และตัดสินจากหลักฐาน</h2>
   <p>ชุดข้อมูลทั้งหมดใน Lab นี้ใช้เพื่อการเรียนการสอน และไม่ใช่ข้อมูลจริงเพิ่มเติมของ “โรงเรียนอรุณพัฒนา”</p>
+</section>
+
+<section class="panel dashboard">
+  <div class="session-row">
+    <div>
+      <p class="eyebrow dark">MY LAB DASHBOARD</p>
+      <h2 id="welcomeName">ยินดีต้อนรับ</h2>
+      <p id="progressText">Progress: 0/5 LABs</p>
+    </div>
+    <div class="progress-ring" id="progressRing">0/5</div>
+  </div>
+  <div class="progress-grid" id="progressCards"></div>
 </section>
 
 <nav class="tabs" aria-label="Lab navigation">
@@ -314,6 +347,19 @@
     <button class="ghost" onclick="downloadEvidence()">Download .md</button>
   </div>
   <pre id="evidencePreview"></pre>
+</section>
+
+<section class="panel student-session">
+  <div class="session-row">
+    <div>
+      <strong id="sessionStudent">Student: —</strong><br>
+      <span id="sessionMeta">Section: —</span>
+    </div>
+    <div class="actions compact">
+      <button class="ghost" onclick="changeLearner()">เปลี่ยนผู้เรียน</button>
+    </div>
+  </div>
+</section>
 </section>
 </main>
 <script src="app.js"></script>
