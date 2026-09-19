@@ -17,6 +17,27 @@ function save(k,v){localStorage.setItem(P+k,JSON.stringify(v))}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
 document.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{document.querySelectorAll(".panel").forEach(x=>x.classList.add("hidden"));document.getElementById(b.dataset.show).classList.remove("hidden")});
 
+function renderLab1(){
+ let s=load("lab1",{});
+ ["lab1Indicator","lab1Evidence","lab1Instrument","lab1Claim","lab1Reason"].forEach(id=>{
+   let el=document.getElementById(id); if(!el)return;
+   el.value=s[id]??"";
+   el.oninput=saveLab1; el.onchange=saveLab1;
+ });
+}
+function saveLab1(){
+ let s={};["lab1Indicator","lab1Evidence","lab1Instrument","lab1Claim","lab1Reason"].forEach(id=>s[id]=document.getElementById(id).value);save("lab1",s)
+}
+function checkLab1(){
+ saveLab1();let s=load("lab1",{}),score=0,notes=[];
+ if(s.lab1Indicator==="ความถูกต้องของการปฏิบัติ CPR")score++;else notes.push("Indicator ต้องสะท้อน performance โดยตรง");
+ if(s.lab1Evidence==="คะแนนการปฏิบัติ")score++;else notes.push("Evidence ต้องตรงกับทักษะที่ต้องการประเมิน");
+ if(s.lab1Instrument==="Performance checklist")score++;else notes.push("Performance ควรใช้เครื่องมือที่สังเกตการปฏิบัติ");
+ if(s.lab1Claim==="NOT SUFFICIENT")score++;else notes.push("Satisfaction ไม่เพียงพอสำหรับสรุป performance");
+ lab1Feedback.innerHTML='<div class="'+(score===4?'good':'note')+'">Alignment score '+score+'/4'+(notes.length?'<br>'+notes.join('<br>'):'<br>EQ → Indicator → Evidence → Instrument สอดคล้องกัน')+'</div>'
+}
+
+
 function renderIOC(){
  let s=load("ioc",{});
  iocTable.innerHTML='<div class="table-wrap"><table><thead><tr><th>Item</th><th>E1</th><th>E2</th><th>E3</th><th>E4</th><th>E5</th><th>ΣR</th><th>IOC</th><th>Decision</th></tr></thead><tbody>'+
@@ -63,15 +84,37 @@ function checkReliabilityChallenge(){
 
 function renderStats(){
  statsDataEl=document.getElementById("statsData");statsDataEl.innerHTML='<div class="table-wrap"><table><thead><tr><th>Learner</th><th>Pre</th><th>Post</th></tr></thead><tbody>'+statsData.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</tbody></table></div>';
- let s=load("stats",{});["preMean","preSD","postMean","postSD","meanChange","statResult","statInterpret","statLimit"].forEach(id=>{document.getElementById(id).value=s[id]??"";document.getElementById(id).oninput=saveStats});
+ let s=load("stats",{});["preMean","preSD","postMean","postSD","meanChange","statResult","statInterpret","statLimit","causalDecision","causalReason"].forEach(id=>{document.getElementById(id).value=s[id]??"";document.getElementById(id).oninput=saveStats});
 }
-function saveStats(){let s={};["preMean","preSD","postMean","postSD","meanChange","statResult","statInterpret","statLimit"].forEach(id=>s[id]=document.getElementById(id).value);save("stats",s)}
+function saveStats(){let s={};["preMean","preSD","postMean","postSD","meanChange","statResult","statInterpret","statLimit","causalDecision","causalReason"].forEach(id=>s[id]=document.getElementById(id).value);save("stats",s)}
 function near(v,t,tol=.03){return Math.abs(Number(v)-t)<=tol}
-function checkStats(){saveStats();let s=load("stats",{});let c=0;if(near(s.preMean,6,.01))c++;if(near(s.preSD,1.13,.04))c++;if(near(s.postMean,7.92,.04))c++;if(near(s.postSD,.79,.04))c++;if(near(s.meanChange,1.92,.04))c++;statsFeedback.innerHTML='<div class="'+(c===5?'good':'note')+'">ค่าพรรณนาถูก '+c+'/5 ค่า'+(c===5?' — ต่อไปให้แยก RESULT, INTERPRETATION และ LIMITATION ให้ชัด':' — ตรวจ mean และ sample SD อีกครั้ง')+'<br><strong>ข้อควรระวัง:</strong> pre–post change แสดงการเปลี่ยนแปลง แต่ยังไม่เพียงพอที่จะยืนยัน causal effect ของโปรแกรม</div>'}
+function checkStats(){saveStats();let s=load("stats",{});let c=0;if(near(s.preMean,6,.01))c++;if(near(s.preSD,1.13,.04))c++;if(near(s.postMean,7.92,.04))c++;if(near(s.postSD,.79,.04))c++;if(near(s.meanChange,1.92,.04))c++;let causalOK=(s.causalDecision==='OVERSTATED'||s.causalDecision==='NOT ENOUGH EVIDENCE');statsFeedback.innerHTML='<div class="'+(c===5&&causalOK?'good':'note')+'">ค่าพรรณนาถูก '+c+'/5 ค่า'+(c===5?'':' — ตรวจ mean และ sample SD อีกครั้ง')+'<br>Causal reasoning: '+(causalOK?'ผ่าน — ไม่สรุปเหตุเกินหลักฐาน':'ทบทวน Evaluation Design และ alternative explanations')+'<br><strong>ข้อควรระวัง:</strong> pre–post change แสดงการเปลี่ยนแปลง แต่ยังไม่เพียงพอที่จะยืนยัน causal effect ของโปรแกรม</div>'}
+
+
+function renderLab5(){
+ let s=load("lab5",{});
+ ["lab5Fact","lab5Interpret","lab5Judgment","lab5Recommendation","lab5Missing","lab5Need"].forEach(id=>{
+   let el=document.getElementById(id); if(!el)return; el.value=s[id]??""; el.oninput=saveLab5;
+ });
+}
+function saveLab5(){let s={};["lab5Fact","lab5Interpret","lab5Judgment","lab5Recommendation","lab5Missing","lab5Need"].forEach(id=>s[id]=document.getElementById(id).value);save("lab5",s)}
+function checkLab5(){
+ saveLab5();let s=load("lab5",{}),fields=["lab5Fact","lab5Interpret","lab5Judgment","lab5Recommendation","lab5Missing","lab5Need"];
+ let filled=fields.filter(k=>(s[k]||"").trim().length>=12).length;
+ lab5Feedback.innerHTML='<div class="'+(filled===6?'good':'note')+'">Reasoning components completed '+filled+'/6'+(filled===6?'<br>ตรวจต่อว่า Recommendation เชื่อมกับ Judgment และไม่เดาสาเหตุเกินหลักฐาน':'<br>เติม Fact → Interpretation → Judgment → Recommendation และ Missing Evidence ให้ครบ')+'</div>'
+}
 
 function resetLab(k){if(confirm("ล้างคำตอบของ Lab นี้ในอุปกรณ์นี้?")){localStorage.removeItem(P+k);location.reload()}}
-function evidenceText(){let i=load("ioc",{}),r=load("rel",{}),s=load("stats",{});return '# HED3505 Evaluation Analysis Lab Evidence\n\n## LAB 2 IOC\n'+iocRows.map((x,n)=>'- '+x.item+': ΣR='+(i["sum"+n]??"-")+', IOC='+(i["ioc"+n]??"-")+', Decision='+(i["dec"+n]??"-")).join('\n')+'\n\nReasoning: '+(i.reason??"-")+'\n\n## LAB 3 Reliability\nAlpha: '+(r.alphaInput??"-")+'\nMeaning: '+(r.alphaMeaning??"-")+'\nLimitation: '+(r.alphaLimit??"-")+'\n\n## LAB 4 Statistics\nPre Mean: '+(s.preMean??"-")+'\nPre SD: '+(s.preSD??"-")+'\nPost Mean: '+(s.postMean??"-")+'\nPost SD: '+(s.postSD??"-")+'\nMean change: '+(s.meanChange??"-")+'\nResult: '+(s.statResult??"-")+'\nInterpretation: '+(s.statInterpret??"-")+'\nLimitation: '+(s.statLimit??"-")+'\n'}
+function evidenceText(){
+ let l1=load("lab1",{}),i=load("ioc",{}),r=load("rel",{}),s=load("stats",{}),l5=load("lab5",{});
+ return '# HED3505 Evaluation Analysis Lab Evidence\n\n'
+ +'## LAB 1 Blueprint\nIndicator: '+(l1.lab1Indicator??"-")+'\nEvidence: '+(l1.lab1Evidence??"-")+'\nInstrument: '+(l1.lab1Instrument??"-")+'\nConstruct challenge: '+(l1.lab1Claim??"-")+'\nReasoning: '+(l1.lab1Reason??"-")+'\n\n'
+ +'## LAB 2 IOC\n'+iocRows.map((x,n)=>'- '+x.item+': ΣR='+(i["sum"+n]??"-")+', IOC='+(i["ioc"+n]??"-")+', Decision='+(i["dec"+n]??"-")).join('\n')+'\nReasoning: '+(i.reason??"-")+'\n\n'
+ +'## LAB 3 Reliability Investigation\nPrediction: '+(r.relPrediction??"-")+'\nMeaning: '+(r.alphaMeaning??"-")+'\nLimitation: '+(r.alphaLimit??"-")+'\nSuspect item: '+(r.suspectItem??"-")+'\nConflict decision: '+(r.deleteI3??"-")+'\nMystery decision: '+(r.mysteryDecision??"-")+'\nFinal decision: '+(r.finalDecision??"-")+'\nEvidence 1: '+(r.finalEvidence1??"-")+'\nEvidence 2: '+(r.finalEvidence2??"-")+'\nRisk: '+(r.finalRisk??"-")+'\nNext action: '+(r.finalAction??"-")+'\n\n'
+ +'## LAB 4 Statistics\nPre Mean: '+(s.preMean??"-")+'\nPre SD: '+(s.preSD??"-")+'\nPost Mean: '+(s.postMean??"-")+'\nPost SD: '+(s.postSD??"-")+'\nMean change: '+(s.meanChange??"-")+'\nResult: '+(s.statResult??"-")+'\nInterpretation: '+(s.statInterpret??"-")+'\nLimitation: '+(s.statLimit??"-")+'\nCausal decision: '+(s.causalDecision??"-")+'\nAlternative evidence: '+(s.causalReason??"-")+'\n\n'
+ +'## LAB 5 Judgment\nFact: '+(l5.lab5Fact??"-")+'\nInterpretation: '+(l5.lab5Interpret??"-")+'\nJudgment: '+(l5.lab5Judgment??"-")+'\nRecommendation: '+(l5.lab5Recommendation??"-")+'\nMissing evidence: '+(l5.lab5Missing??"-")+'\nEvidence needed: '+(l5.lab5Need??"-")+'\n';
+}
 function renderEvidence(){evidencePreview.textContent=evidenceText()}
 async function copyEvidence(){let t=evidenceText();try{await navigator.clipboard.writeText(t);alert("คัดลอกแล้ว")}catch(e){renderEvidence()}}
 function downloadEvidence(){let t=evidenceText(),b=new Blob([t],{type:"text/markdown;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="HED3505_Evaluation_Analysis_Lab_Evidence.md";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
-renderIOC();renderReliability();renderStats();
+renderLab1();renderIOC();renderReliability();renderStats();renderLab5();
