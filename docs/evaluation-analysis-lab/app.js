@@ -32,16 +32,14 @@ function saveLearner(x){localStorage.setItem(LEARNER_KEY,JSON.stringify(x))}
 function enterLab(){
   const student_id=document.getElementById("studentId").value.trim();
   const display_name=document.getElementById("displayName").value.trim();
-  const section=document.getElementById("sectionName").value.trim();
   let problems=[];
   if(!validStudentId(student_id))problems.push("กรอกรหัสนักศึกษาเป็นตัวเลข 6–15 หลัก");
   if(display_name.length<2)problems.push("กรอกชื่อที่ใช้แสดงผล");
-  if(!section)problems.push("กรอก Section / กลุ่มเรียน");
   if(problems.length){
     document.getElementById("checkinFeedback").innerHTML='<div class="warn">'+problems.join("<br>")+'</div>';
     return;
   }
-  saveLearner({student_id,display_name,section,checkin_at:new Date().toISOString()});
+  saveLearner({student_id,display_name,checkin_at:new Date().toISOString()});
   openLabApp();
 }
 function changeLearner(){
@@ -68,7 +66,6 @@ function renderDashboard(){
   const learner=getLearner(); if(!learner)return;
   document.getElementById("welcomeName").textContent="สวัสดี "+learner.display_name;
   document.getElementById("sessionStudent").textContent="Student: "+maskStudentId(learner.student_id);
-  document.getElementById("sessionMeta").textContent="Section: "+learner.section;
   let done=0;
   const cards=labLabels.map(([key,label,title])=>{
     const complete=isLabComplete(key),started=isLabStarted(key);
@@ -203,7 +200,7 @@ function checkLab5(){
 function resetLab(k){if(confirm("ล้างคำตอบของ Lab นี้ในอุปกรณ์นี้?")){localStorage.removeItem(P+k);location.reload()}}
 function evidenceText(){
  let learner=getLearner()||{},l1=load("lab1",{}),i=load("ioc",{}),r=load("rel",{}),s=load("stats",{}),l5=load("lab5",{});
- return '# HED3505 Evaluation Analysis Lab Evidence\n\nStudent ID: '+(learner.student_id??"-")+'\nDisplay Name: '+(learner.display_name??"-")+'\nSection: '+(learner.section??"-")+'\nGenerated: '+new Date().toISOString()+'\n\n'
+ return '# HED3505 Evaluation Analysis Lab Evidence\n\nStudent ID: '+(learner.student_id??"-")+'\nDisplay Name: '+(learner.display_name??"-")+'\nGenerated: '+new Date().toISOString()+'\n\n'
  +'## LAB 1 Blueprint\nIndicator: '+(l1.lab1Indicator??"-")+'\nEvidence: '+(l1.lab1Evidence??"-")+'\nInstrument: '+(l1.lab1Instrument??"-")+'\nConstruct challenge: '+(l1.lab1Claim??"-")+'\nReasoning: '+(l1.lab1Reason??"-")+'\n\n'
  +'## LAB 2 IOC\n'+iocRows.map((x,n)=>'- '+x.item+': ΣR='+(i["sum"+n]??"-")+', IOC='+(i["ioc"+n]??"-")+', Decision='+(i["dec"+n]??"-")).join('\n')+'\nReasoning: '+(i.reason??"-")+'\n\n'
  +'## LAB 3 Reliability Investigation\nPrediction: '+(r.relPrediction??"-")+'\nMeaning: '+(r.alphaMeaning??"-")+'\nLimitation: '+(r.alphaLimit??"-")+'\nSuspect item: '+(r.suspectItem??"-")+'\nConflict decision: '+(r.deleteI3??"-")+'\nMystery decision: '+(r.mysteryDecision??"-")+'\nFinal decision: '+(r.finalDecision??"-")+'\nEvidence 1: '+(r.finalEvidence1??"-")+'\nEvidence 2: '+(r.finalEvidence2??"-")+'\nRisk: '+(r.finalRisk??"-")+'\nNext action: '+(r.finalAction??"-")+'\n\n'
