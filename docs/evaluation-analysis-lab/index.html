@@ -11,7 +11,7 @@
   <div class="wrap">
     <p class="eyebrow">HED3505 · CONTROLLED PREVIEW</p>
     <h1>Evaluation Analysis Lab</h1>
-    <p>IOC → Reliability → Statistical Analysis</p>
+    <p>Question → Instrument → IOC → Reliability → Statistics → Judgment</p>
   </div>
 </header>
 
@@ -23,13 +23,73 @@
 </section>
 
 <nav class="tabs" aria-label="Lab navigation">
+  <button data-show="lab1">LAB 1 · Blueprint</button>
   <button data-show="lab2">LAB 2 · IOC</button>
   <button data-show="lab3">LAB 3 · Reliability</button>
   <button data-show="lab4">LAB 4 · Statistics</button>
+  <button data-show="lab5">LAB 5 · Judgment</button>
   <button data-show="evidence">Evidence</button>
 </nav>
 
-<section id="lab2" class="panel">
+<section id="lab1" class="panel">
+  <h2>LAB 1 — Evaluation Question → Indicator → Instrument</h2>
+  <p class="lead">เริ่มจาก “ต้องการรู้อะไร” แล้วเลือกตัวชี้วัด หลักฐาน และเครื่องมือให้สอดคล้องกัน</p>
+
+  <div class="card">
+    <h3>Stage 1 · Evaluation Question</h3>
+    <p><strong>โจทย์:</strong> โปรแกรมฝึก CPR ช่วยให้นักเรียนมีความสามารถในการช่วยชีวิตขั้นพื้นฐานตามเป้าหมายหรือไม่?</p>
+    <label>เลือก Indicator ที่เหมาะสมที่สุดสำหรับ “ความสามารถในการปฏิบัติ CPR”
+      <select id="lab1Indicator">
+        <option value="">เลือก</option>
+        <option>ความพึงพอใจต่อการอบรม</option>
+        <option>คะแนนความรู้ CPR</option>
+        <option>ความถูกต้องของการปฏิบัติ CPR</option>
+        <option>จำนวนครั้งที่เข้าอบรม</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="card">
+    <h3>Stage 2 · Evidence & Instrument Match</h3>
+    <label>หลักฐานที่เหมาะสม
+      <select id="lab1Evidence">
+        <option value="">เลือก</option>
+        <option>คะแนนความพึงพอใจ</option>
+        <option>คะแนนการปฏิบัติ</option>
+        <option>จำนวนผู้เข้าอบรม</option>
+        <option>ความคิดเห็นทั่วไป</option>
+      </select>
+    </label>
+    <label>เครื่องมือที่เหมาะสม
+      <select id="lab1Instrument">
+        <option value="">เลือก</option>
+        <option>Knowledge quiz</option>
+        <option>Performance checklist</option>
+        <option>Satisfaction survey</option>
+        <option>Attendance sheet</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="card">
+    <h3>Stage 3 · Construct Challenge</h3>
+    <p><strong>Claim:</strong> “คะแนนความพึงพอใจสูง จึงสรุปได้ว่านักเรียนทำ CPR ได้จริง”</p>
+    <label>ประเมินข้ออ้าง
+      <select id="lab1Claim">
+        <option value="">เลือก</option>
+        <option>SUPPORTED</option>
+        <option>NOT SUFFICIENT</option>
+      </select>
+    </label>
+    <label>เหตุผล
+      <textarea id="lab1Reason"></textarea>
+    </label>
+    <button onclick="checkLab1()">ตรวจการเชื่อมโยง</button>
+    <div id="lab1Feedback"></div>
+  </div>
+</section>
+
+<section id="lab2" class="panel hidden">
   <h2>LAB 2 — IOC Analysis</h2>
   <p class="lead">คำนวณ IOC รายข้อ แล้วตัดสินใจว่าจะ RETAIN / REVIEW / REVISE / REMOVE พร้อมเหตุผล</p>
   <details><summary>สูตร IOC</summary><div class="formula">IOC = ΣR / N</div><p>R = คะแนนผู้เชี่ยวชาญ (-1, 0, +1), N = จำนวนผู้เชี่ยวชาญ</p></details>
@@ -179,11 +239,70 @@
   <label>LIMITATION — ยังสรุปอะไรไม่ได้?
     <textarea id="statLimit"></textarea>
   </label>
+
+  <div class="card">
+    <h3>Statistics Challenge · Causal Overclaim</h3>
+    <p><strong>Claim:</strong> “คะแนน Post สูงกว่า Pre ดังนั้นโปรแกรมเป็นสาเหตุของการเพิ่มขึ้น”</p>
+    <label>ประเมินข้ออ้าง
+      <select id="causalDecision">
+        <option value="">เลือก</option>
+        <option>SUPPORTED</option>
+        <option>OVERSTATED</option>
+        <option>NOT ENOUGH EVIDENCE</option>
+      </select>
+    </label>
+    <label>Alternative explanation หรือหลักฐานที่ยังต้องการ
+      <textarea id="causalReason"></textarea>
+    </label>
+  </div>
   <div class="actions">
     <button onclick="checkStats()">ตรวจคำตอบ</button>
     <button class="ghost" onclick="resetLab('stats')">เริ่มใหม่</button>
   </div>
   <div id="statsFeedback"></div>
+</section>
+
+<section id="lab5" class="panel hidden">
+  <h2>LAB 5 — Interpretation → Judgment → Recommendation</h2>
+  <p class="lead">นำหลักฐานหลายชิ้นมาสร้างข้อสรุปที่ตรวจสอบได้ โดยไม่กระโดดจาก Fact ไป Recommendation</p>
+
+  <div class="card">
+    <h3>Evidence Cards — Master Case</h3>
+    <ul>
+      <li>CPR knowledge pass = 81%</li>
+      <li>CPR performance pass = 38%</li>
+      <li>Satisfaction = 4.3/5</li>
+    </ul>
+    <p class="note">ข้อมูลข้างต้นเป็นข้อมูลกรณีศึกษา “โรงเรียนอรุณพัฒนา” ตาม baseline ที่กำหนด</p>
+  </div>
+
+  <div class="card">
+    <h3>Reasoning Ladder</h3>
+    <label>FACT — ข้อมูลแสดงอะไรโดยตรง?
+      <textarea id="lab5Fact"></textarea>
+    </label>
+    <label>INTERPRETATION — ข้อมูลมีความหมายอย่างไรในบริบท?
+      <textarea id="lab5Interpret"></textarea>
+    </label>
+    <label>JUDGMENT — เมื่อพิจารณาข้อมูล + เกณฑ์ในกรณีศึกษา + บริบท จะตัดสินอย่างไร?
+      <textarea id="lab5Judgment"></textarea>
+    </label>
+    <label>RECOMMENDATION — ควรทำอะไรต่อ?
+      <textarea id="lab5Recommendation"></textarea>
+    </label>
+  </div>
+
+  <div class="card">
+    <h3>Missing Evidence Challenge</h3>
+    <label>หลักฐานที่มี “ยังบอกอะไรไม่ได้”?
+      <textarea id="lab5Missing"></textarea>
+    </label>
+    <label>ต้องการหลักฐานอะไรเพิ่มก่อนตัดสินใจแรงขึ้น?
+      <textarea id="lab5Need"></textarea>
+    </label>
+    <button onclick="checkLab5()">ตรวจความครบถ้วนของ Reasoning Ladder</button>
+    <div id="lab5Feedback"></div>
+  </div>
 </section>
 
 <section id="evidence" class="panel hidden">
