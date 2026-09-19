@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HED3505 Evaluation Analysis Lab</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <p class="eyebrow">HED3505 · CONTROLLED PREVIEW</p>
+    <h1>Evaluation Analysis Lab</h1>
+    <p>IOC → Reliability → Statistical Analysis</p>
+  </div>
+</header>
+
+<main class="wrap">
+<section class="hero">
+  <span class="badge">Synthetic teaching data</span>
+  <h2>ฝึกคำนวณ ตีความ และตัดสินจากหลักฐาน</h2>
+  <p>ชุดข้อมูลทั้งหมดใน Lab นี้ใช้เพื่อการเรียนการสอน และไม่ใช่ข้อมูลจริงเพิ่มเติมของ “โรงเรียนอรุณพัฒนา”</p>
+</section>
+
+<nav class="tabs" aria-label="Lab navigation">
+  <button data-show="lab2">LAB 2 · IOC</button>
+  <button data-show="lab3">LAB 3 · Reliability</button>
+  <button data-show="lab4">LAB 4 · Statistics</button>
+  <button data-show="evidence">Evidence</button>
+</nav>
+
+<section id="lab2" class="panel">
+  <h2>LAB 2 — IOC Analysis</h2>
+  <p class="lead">คำนวณ IOC รายข้อ แล้วตัดสินใจว่าจะ RETAIN / REVIEW / REVISE / REMOVE พร้อมเหตุผล</p>
+  <details><summary>สูตร IOC</summary><div class="formula">IOC = ΣR / N</div><p>R = คะแนนผู้เชี่ยวชาญ (-1, 0, +1), N = จำนวนผู้เชี่ยวชาญ</p></details>
+  <div id="iocTable"></div>
+  <label>ข้อใดควรได้รับการทบทวนมากที่สุด และเพราะเหตุใด?
+    <textarea id="iocReason"></textarea>
+  </label>
+  <div class="actions">
+    <button onclick="checkIOC()">ตรวจคำตอบ</button>
+    <button class="ghost" onclick="resetLab('ioc')">เริ่มใหม่</button>
+  </div>
+  <div id="iocFeedback"></div>
+</section>
+
+<section id="lab3" class="panel hidden">
+  <h2>LAB 3 — Reliability Analysis</h2>
+  <p class="lead">เลือกวิธี reliability ให้ตรงกับเครื่องมือก่อน แล้วจึงคำนวณ/ตีความ</p>
+
+  <div class="card">
+    <h3>Step 1 · เลือกวิธี Reliability</h3>
+    <div id="reliabilityScenarios"></div>
+    <button onclick="checkReliabilityMethods()">ตรวจการเลือกวิธี</button>
+    <div id="methodFeedback"></div>
+  </div>
+
+  <div class="card">
+    <h3>Step 2 · Cronbach’s alpha</h3>
+    <p>ชุดข้อมูล: Likert 5 ข้อ, 12 คน</p>
+    <details><summary>ดูข้อมูลทดลองใช้</summary><div id="relData"></div></details>
+    <details><summary>สูตร Cronbach’s alpha</summary>
+      <div class="formula">α = k/(k−1) × [1 − Σσ²ᵢ / σ²ₜ]</div>
+    </details>
+    <label>กรอกค่า alpha ที่คำนวณได้
+      <input id="alphaInput" inputmode="decimal" placeholder="เช่น 0.90">
+    </label>
+    <label>ค่า alpha นี้สนับสนุนข้อสรุปใด?
+      <textarea id="alphaMeaning"></textarea>
+    </label>
+    <label>ค่า alpha นี้ยัง “ไม่สามารถ” ยืนยันอะไร?
+      <textarea id="alphaLimit"></textarea>
+    </label>
+    <button onclick="checkAlpha()">ตรวจและตีความ</button>
+    <div id="alphaFeedback"></div>
+  </div>
+</section>
+
+<section id="lab4" class="panel hidden">
+  <h2>LAB 4 — Statistical Data Analysis</h2>
+  <p class="lead">วิเคราะห์ข้อมูล pre–post เชิงพรรณนา แล้วเขียนข้อสรุปที่ไม่เกินหลักฐาน</p>
+  <details open><summary>ชุดข้อมูลจำลอง</summary><div id="statsData"></div></details>
+  <div class="grid two">
+    <div class="card">
+      <h3>Pre-test</h3>
+      <label>Mean <input id="preMean" inputmode="decimal"></label>
+      <label>SD <input id="preSD" inputmode="decimal"></label>
+    </div>
+    <div class="card">
+      <h3>Post-test</h3>
+      <label>Mean <input id="postMean" inputmode="decimal"></label>
+      <label>SD <input id="postSD" inputmode="decimal"></label>
+    </div>
+  </div>
+  <label>Mean change
+    <input id="meanChange" inputmode="decimal">
+  </label>
+  <label>RESULT — ข้อมูลแสดงอะไร?
+    <textarea id="statResult"></textarea>
+  </label>
+  <label>INTERPRETATION — ตีความอย่างไร?
+    <textarea id="statInterpret"></textarea>
+  </label>
+  <label>LIMITATION — ยังสรุปอะไรไม่ได้?
+    <textarea id="statLimit"></textarea>
+  </label>
+  <div class="actions">
+    <button onclick="checkStats()">ตรวจคำตอบ</button>
+    <button class="ghost" onclick="resetLab('stats')">เริ่มใหม่</button>
+  </div>
+  <div id="statsFeedback"></div>
+</section>
+
+<section id="evidence" class="panel hidden">
+  <h2>Evidence Output</h2>
+  <p>ระบบสร้างสรุปจากคำตอบใน browser นี้เท่านั้น ไม่ส่งข้อมูลไปยัง backend</p>
+  <div class="actions">
+    <button onclick="renderEvidence()">สร้าง Evidence Preview</button>
+    <button class="ghost" onclick="copyEvidence()">Copy</button>
+    <button class="ghost" onclick="downloadEvidence()">Download .md</button>
+  </div>
+  <pre id="evidencePreview"></pre>
+</section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
