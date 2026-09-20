@@ -101,6 +101,46 @@ function renderCongratulations(){
   if(m)m.textContent="Completion Date: "+formatThaiDate(rec.completion_date)+" · Certificate ID: "+rec.certificate_id;
   const nav=document.getElementById("congratsNav"); if(nav)nav.classList.remove("hidden");
 }
+function labKeyFromPanel(id){
+  if(id==="lab1")return "lab1";
+  if(id==="lab2")return "ioc";
+  if(id==="lab3")return "rel";
+  if(id==="lab4")return "stats";
+  if(id==="lab5")return "lab5";
+  return null;
+}
+function goToLab(id){
+  const targetKey=labKeyFromPanel(id);
+  const order=["lab1","lab2","lab3","lab4","lab5"];
+  const currentVisible=order.find(x=>{
+    const el=document.getElementById(x);
+    return el&&!el.classList.contains("hidden");
+  });
+  const currentKey=labKeyFromPanel(currentVisible);
+  if(targetKey&&currentKey){
+    const currentIndex=order.indexOf(currentVisible);
+    const targetIndex=order.indexOf(id);
+    if(targetIndex>currentIndex && !isLabComplete(currentKey)){
+      const proceed=confirm("LAB นี้ยังไม่ครบตามเกณฑ์ที่ระบบตรวจได้\n\nแนะนำให้ทำให้ครบก่อนเพื่อให้การเรียนรู้ต่อเนื่อง\n\nต้องการไป LAB ถัดไปหรือไม่?");
+      if(!proceed)return;
+    }
+  }
+  showPanel(id);
+  const target=document.getElementById(id);
+  if(target)target.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function finishLabJourney(){
+  if(!allLabsComplete()){
+    alert("ยังทำกิจกรรมไม่ครบทั้ง 5 LAB\n\nกรุณาตรวจ Progress Dashboard หรือกลับไปเติมคำตอบที่ยังไม่ครบ");
+    renderDashboard();
+    window.scrollTo({top:document.querySelector(".dashboard").offsetTop-12,behavior:"smooth"});
+    return;
+  }
+  renderCongratulations();
+  showPanel("congratulations");
+  document.getElementById("congratulations").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
 function showPanel(id){
   document.querySelectorAll(".panel").forEach(x=>{
     if(!x.classList.contains("dashboard")&&!x.classList.contains("student-session"))x.classList.add("hidden");
