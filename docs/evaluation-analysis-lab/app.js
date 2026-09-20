@@ -234,13 +234,23 @@ function renderIOC(){
  iocTable.innerHTML='<div class="table-wrap"><table><thead><tr><th>Item</th><th>E1</th><th>E2</th><th>E3</th><th>E4</th><th>E5</th><th>ΣR</th><th>IOC</th><th>Decision</th></tr></thead><tbody>'+
  iocRows.map((r,i)=>'<tr><td>'+r.item+'</td>'+r.ratings.map(v=>'<td>'+v+'</td>').join('')+
  '<td><input aria-label="sum '+r.item+'" data-sum="'+i+'" inputmode="numeric" value="'+(s["sum"+i]??"")+'"></td>'+
- '<td><input aria-label="ioc '+r.item+'" data-ioc="'+i+'" inputmode="decimal" value="'+(s["ioc"+i]??"")+'"></td>'+
+ '<td><div class="ioc-input-wrap"><input aria-label="ioc '+r.item+'" data-ioc="'+i+'" type="text" inputmode="decimal" pattern="-?[0-9]*[.,]?[0-9]*" value="'+(s["ioc"+i]??"")+'">'+(r.ioc<0?'<button type="button" class="mini-sign" data-neg="'+i+'" aria-label="ใส่เครื่องหมายลบ">−</button>':'')+'</div></td>'+
  '<td><select data-dec="'+i+'"><option value="">เลือก</option><option>RETAIN</option><option>REVIEW</option><option>REVISE</option><option>REMOVE</option></select></td></tr>').join('')+'</tbody></table></div>';
  iocRows.forEach((r,i)=>{let d=document.querySelector('[data-dec="'+i+'"]');d.value=s["dec"+i]??"";});
  document.querySelectorAll('[data-sum],[data-ioc],[data-dec]').forEach(e=>e.oninput=saveIOC);
+ document.querySelectorAll('[data-neg]').forEach(btn=>btn.onclick=()=>{
+   const i=btn.getAttribute("data-neg");
+   const el=document.querySelector('[data-ioc="'+i+'"]');
+   let v=(el.value||"").trim();
+   if(!v){el.value="-";}
+   else if(v.startsWith("-")){el.value=v.slice(1);}
+   else{el.value="-"+v;}
+   el.focus();
+   saveIOC();
+ });
  iocReason.value=s.reason??""; iocReason.oninput=saveIOC;
 }
-function saveIOC(){let s={reason:iocReason.value};iocRows.forEach((r,i)=>{s["sum"+i]=document.querySelector('[data-sum="'+i+'"]').value;s["ioc"+i]=document.querySelector('[data-ioc="'+i+'"]').value;s["dec"+i]=document.querySelector('[data-dec="'+i+'"]').value});save("ioc",s); if(getLearner())renderDashboard()}
+function saveIOC(){let s={reason:iocReason.value};iocRows.forEach((r,i)=>{s["sum"+i]=document.querySelector('[data-sum="'+i+'"]').value;s["ioc"+i]=document.querySelector('[data-ioc="'+i+'"]').value.replace(",",".");s["dec"+i]=document.querySelector('[data-dec="'+i+'"]').value});save("ioc",s); if(getLearner())renderDashboard()}
 function checkIOC(){saveIOC();let s=load("ioc",{}),correct=0; iocRows.forEach((r,i)=>{if(Number(s["sum"+i])===r.sum && Math.abs(Number(s["ioc"+i])-r.ioc)<.011)correct++});iocFeedback.innerHTML='<div class="'+(correct===5?'good':'note')+'"><strong>'+(correct===5?'✓ Calculation complete':'ลองตรวจอีกครั้ง')+'</strong><br>คำนวณถูก '+correct+'/5 ข้อ '+(correct<5?'ตรวจ ΣR ก่อน แล้วหารด้วยจำนวนผู้เชี่ยวชาญ 5 คน':'จากนี้ให้พิจารณา decision และเหตุผล ไม่ใช่ดูตัวเลขเพียงอย่างเดียว')+'<div class="micro-review"><b>Key idea:</b> IOC เป็นหลักฐานด้าน content validity ไม่ใช่คำสั่งอัตโนมัติให้ลบหรือเก็บข้อคำถาม</div></div>'; maybeCelebrate()}
 
 function renderReliability(){
