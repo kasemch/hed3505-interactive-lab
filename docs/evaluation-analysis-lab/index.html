@@ -65,6 +65,15 @@
 <section id="lab1" class="panel">
   <h2>LAB 1 — Evaluation Question → Indicator → Instrument</h2>
   <p class="lead">เริ่มจาก “ต้องการรู้อะไร” แล้วเลือกตัวชี้วัด หลักฐาน และเครื่องมือให้สอดคล้องกัน</p>
+  <div class="learning-visual flow-visual" aria-label="Evaluation question to instrument flow">
+    <div class="flow-node"><span>1</span><strong>Evaluation Question</strong><small>ต้องการรู้อะไร?</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><span>2</span><strong>Indicator</strong><small>จะดูจากอะไร?</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><span>3</span><strong>Evidence</strong><small>ต้องมีหลักฐานอะไร?</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><span>4</span><strong>Instrument</strong><small>จะเก็บอย่างไร?</small></div>
+  </div>
 
   <div class="card">
     <h3>Stage 1 · Evaluation Question</h3>
@@ -123,6 +132,17 @@
 <section id="lab2" class="panel hidden">
   <h2>LAB 2 — IOC Analysis</h2>
   <p class="lead">คำนวณ IOC รายข้อ แล้วตัดสินใจว่าจะ RETAIN / REVIEW / REVISE / REMOVE พร้อมเหตุผล</p>
+  <div class="learning-visual">
+    <div class="visual-heading"><strong>IOC Snapshot</strong><span class="dataset-tag">Synthetic Teaching Dataset</span></div>
+    <div class="ioc-bars" aria-label="IOC values by item">
+      <div><span>Q1</span><b style="--v:80%">0.80</b></div>
+      <div><span>Q2</span><b style="--v:20%">0.20</b></div>
+      <div><span>Q3</span><b style="--v:100%">1.00</b></div>
+      <div><span>Q4</span><b style="--v:60%">0.60</b></div>
+      <div class="negative"><span>Q5</span><b style="--v:20%">-0.20</b></div>
+    </div>
+    <p class="visual-caption">ใช้กราฟเพื่อเห็นรูปแบบของค่า แต่การตัดสินใจยังต้องพิจารณา wording, coverage และ expert comments ร่วมด้วย</p>
+  </div>
   <details><summary>สูตร IOC</summary><div class="formula">IOC = ΣR / N</div><p>R = คะแนนผู้เชี่ยวชาญ (-1, 0, +1), N = จำนวนผู้เชี่ยวชาญ</p></details>
   <div id="iocTable"></div>
   <label>ข้อใดควรได้รับการทบทวนมากที่สุด และเพราะเหตุใด?
@@ -138,6 +158,11 @@
 <section id="lab3" class="panel hidden">
   <h2>LAB 3 — Reliability Investigation Lab</h2>
   <p class="lead">ไม่เน้นแทนค่าสูตร แต่ให้เลือกวิธี อ่านผล สืบสวนข้อที่น่าสงสัย และตัดสินจากหลักฐานหลายชิ้น</p>
+  <div class="learning-visual reliability-visual">
+    <div class="alpha-card"><span>Reliability Output</span><strong>α = 0.90</strong><small>Internal consistency evidence</small></div>
+    <div class="not-equal">≠</div>
+    <div class="validity-card"><span>Validity</span><strong>ยังสรุปไม่ได้</strong><small>ต้องใช้หลักฐานด้านอื่นร่วมด้วย</small></div>
+  </div>
 
   <div class="card">
     <h3>Stage 1 · Choose the Method</h3>
@@ -181,7 +206,7 @@
         <tbody>
           <tr><td>I1</td><td>.62</td><td>.88</td></tr>
           <tr><td>I2</td><td>.58</td><td>.89</td></tr>
-          <tr><td><strong>I3</strong></td><td><strong>.14</strong></td><td><strong>.94</strong></td></tr>
+          <tr class="attention-row"><td><strong>I3</strong><span class="flag">ตรวจเพิ่ม</span></td><td><strong>.14</strong></td><td><strong>.94</strong></td></tr>
           <tr><td>I4</td><td>.66</td><td>.87</td></tr>
           <tr><td>I5</td><td>.61</td><td>.88</td></tr>
         </tbody>
@@ -199,7 +224,11 @@
 
   <div class="card">
     <h3>Stage 5 · Evidence Conflict</h3>
-    <p class="note"><strong>Evidence Card ใหม่:</strong> IOC ของ I3 = 1.00 และผู้เชี่ยวชาญระบุว่า I3 เป็นองค์ประกอบสำคัญของ construct</p>
+    <div class="evidence-split">
+      <div class="evidence-mini positive"><small>Content evidence</small><strong>I3 IOC = 1.00</strong><span>ผู้เชี่ยวชาญเห็นว่าสำคัญต่อ construct</span></div>
+      <div class="evidence-mini caution"><small>Reliability evidence</small><strong>Item-total = .14</strong><span>Alpha if deleted = .94</span></div>
+    </div>
+    <p class="note"><strong>โจทย์:</strong> หลักฐาน 2 ชิ้นชี้คนละด้าน จึงยังไม่ควรตัดสินจากค่าใดค่าหนึ่งเพียงอย่างเดียว</p>
     <label>ควรลบ I3 ทันทีหรือไม่?
       <select id="deleteI3">
         <option value="">เลือก</option>
@@ -246,6 +275,15 @@
   <h2>LAB 4 — Statistical Data Analysis</h2>
   <p class="lead">วิเคราะห์ข้อมูล pre–post เชิงพรรณนา แล้วเขียนข้อสรุปที่ไม่เกินหลักฐาน</p>
   <details open><summary>ชุดข้อมูลจำลอง</summary><div id="statsData"></div></details>
+  <div class="learning-visual stats-chart" aria-label="Pre and post mean comparison">
+    <div class="visual-heading"><strong>Pre–Post Mean Comparison</strong><span class="dataset-tag">Synthetic Teaching Dataset</span></div>
+    <div class="bar-pair">
+      <div class="bar-col"><div class="bar pre" style="--h:60%"><span>6.00</span></div><small>Pre</small></div>
+      <div class="bar-col"><div class="bar post" style="--h:79.2%"><span>7.92</span></div><small>Post</small></div>
+    </div>
+    <div class="change-chip">Mean change = +1.92</div>
+    <p class="visual-caption">กราฟแสดงการเปลี่ยนแปลงของค่าเฉลี่ย แต่ยังไม่ยืนยันว่าโปรแกรมเป็นสาเหตุของการเปลี่ยนแปลง</p>
+  </div>
   <div class="grid two">
     <div class="card">
       <h3>Pre-test</h3>
@@ -305,6 +343,13 @@
       <li>Satisfaction = 4.3/5</li>
     </ul>
     <p class="note">ข้อมูลข้างต้นเป็นข้อมูลกรณีศึกษา “โรงเรียนอรุณพัฒนา” ตาม baseline ที่กำหนด</p>
+  </div>
+
+  <div class="learning-visual reasoning-ladder" aria-label="Fact to recommendation reasoning ladder">
+    <div><span>1</span><strong>FACT</strong><small>ข้อมูลบอกอะไรโดยตรง?</small></div>
+    <div><span>2</span><strong>INTERPRETATION</strong><small>ข้อมูลมีความหมายอย่างไร?</small></div>
+    <div><span>3</span><strong>JUDGMENT</strong><small>เมื่อเทียบเกณฑ์และบริบท?</small></div>
+    <div><span>4</span><strong>RECOMMENDATION</strong><small>ควรทำอะไรต่อ?</small></div>
   </div>
 
   <div class="card">
