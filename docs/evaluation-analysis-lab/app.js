@@ -253,7 +253,11 @@ function renderIOC(){
  iocReason.value=s.reason??""; iocReason.oninput=saveIOC;
 }
 function saveIOC(){let s={reason:iocReason.value};iocRows.forEach((r,i)=>{s["sum"+i]=document.querySelector('[data-sum="'+i+'"]').value.replace("−","-");s["ioc"+i]=document.querySelector('[data-ioc="'+i+'"]').value.replace("−","-").replace(",",".");s["dec"+i]=document.querySelector('[data-dec="'+i+'"]').value});save("ioc",s); if(getLearner())renderDashboard()}
-function checkIOC(){saveIOC();let s=load("ioc",{}),correct=0; iocRows.forEach((r,i)=>{if(Number(s["sum"+i])===r.sum && Math.abs(Number(s["ioc"+i])-r.ioc)<.011)correct++});iocFeedback.innerHTML='<div class="'+(correct===5?'good':'note')+'"><strong>'+(correct===5?'✓ Calculation complete':'ลองตรวจอีกครั้ง')+'</strong><br>คำนวณถูก '+correct+'/5 ข้อ '+(correct<5?'ตรวจ ΣR ก่อน แล้วหารด้วยจำนวนผู้เชี่ยวชาญ 5 คน':'จากนี้ให้พิจารณา decision และเหตุผล ไม่ใช่ดูตัวเลขเพียงอย่างเดียว')+'<div class="micro-review"><b>Key idea:</b> IOC เป็นหลักฐานด้าน content validity ไม่ใช่คำสั่งอัตโนมัติให้ลบหรือเก็บข้อคำถาม</div></div>'; maybeCelebrate()}
+function checkIOC(){saveIOC();let s=load("ioc",{}),correct=0; iocRows.forEach((r,i)=>{if(Number(s["sum"+i])===r.sum && Math.abs(Number(s["ioc"+i])-r.ioc)<.011)correct++});
+ const resultChart='<div class="post-answer-visual"><div class="visual-heading"><strong>เฉลยหลังทำกิจกรรม · IOC Pattern</strong><span class="dataset-tag">Synthetic Teaching Dataset</span></div><div class="ioc-bars" aria-label="IOC answer values by item">'+
+ iocRows.map(r=>'<div class="'+(r.ioc<0?'negative':'')+'"><span>'+r.item+'</span><b style="--v:'+Math.max(8,Math.abs(r.ioc)*100)+'%">'+r.ioc.toFixed(2)+'</b></div>').join('')+
+ '</div><p class="visual-caption">กราฟนี้แสดงหลังตรวจคำตอบ เพื่อใช้ทบทวนรูปแบบของค่า IOC ไม่ได้ใช้เป็นคำสั่งอัตโนมัติให้เก็บหรือลบข้อคำถาม</p></div>';
+ iocFeedback.innerHTML='<div class="'+(correct===5?'good':'note')+'"><strong>'+(correct===5?'✓ Calculation complete':'ลองตรวจอีกครั้ง')+'</strong><br>คำนวณถูก '+correct+'/5 ข้อ '+(correct<5?'ตรวจ ΣR ก่อน แล้วหารด้วยจำนวนผู้เชี่ยวชาญ 5 คน':'จากนี้ให้พิจารณา decision และเหตุผล ไม่ใช่ดูตัวเลขเพียงอย่างเดียว')+'<div class="micro-review"><b>Key idea:</b> IOC เป็นหลักฐานด้าน content validity ไม่ใช่คำสั่งอัตโนมัติให้ลบหรือเก็บข้อคำถาม</div>'+resultChart+'</div>'; maybeCelebrate()}
 
 function renderReliability(){
  const sc=[["a","Multi-item Likert scale"],["b","Dichotomous 0/1 knowledge test"],["c","Multiple assessors scoring performance"],["d","Same instrument at two time points"]];
