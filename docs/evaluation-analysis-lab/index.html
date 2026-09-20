@@ -127,6 +127,18 @@
     <button onclick="checkLab1()">ตรวจการเชื่อมโยง</button>
     <div id="lab1Feedback"></div>
   </div>
+
+  <div class="lab-footer-nav">
+    <div class="lab-footer-summary">
+      <span class="footer-status">LAB 1</span>
+      <strong>Evaluation Question → Indicator → Evidence → Instrument</strong>
+      <small>ทบทวนความสอดคล้องก่อนเดินหน้าต่อ</small>
+    </div>
+    <div class="lab-footer-actions">
+      <button class="ghost" onclick="showPanel('evidence')">ดู Evidence</button>
+      <button onclick="goToLab('lab2')">ไป LAB 2 · IOC →</button>
+    </div>
+  </div>
 </section>
 
 <section id="lab2" class="panel hidden">
@@ -153,6 +165,18 @@
     <button class="ghost" onclick="resetLab('ioc')">เริ่มใหม่</button>
   </div>
   <div id="iocFeedback"></div>
+
+  <div class="lab-footer-nav">
+    <div class="lab-footer-summary">
+      <span class="footer-status">LAB 2</span>
+      <strong>Content Validity & IOC</strong>
+      <small>คำนวณ → ตีความ → ตัดสินใจจากหลักฐานหลายด้าน</small>
+    </div>
+    <div class="lab-footer-actions">
+      <button class="ghost" onclick="goToLab('lab1')">← LAB 1</button>
+      <button onclick="goToLab('lab3')">ไป LAB 3 · Reliability →</button>
+    </div>
+  </div>
 </section>
 
 <section id="lab3" class="panel hidden">
@@ -269,6 +293,18 @@
     <button onclick="checkReliabilityChallenge()">ตรวจความครบถ้วนของเหตุผล</button>
     <div id="alphaFeedback"></div>
   </div>
+
+  <div class="lab-footer-nav">
+    <div class="lab-footer-summary">
+      <span class="footer-status">LAB 3</span>
+      <strong>Reliability Investigation</strong>
+      <small>อ่าน output → ตรวจ item → เปรียบเทียบหลักฐาน → ตัดสินใจ</small>
+    </div>
+    <div class="lab-footer-actions">
+      <button class="ghost" onclick="goToLab('lab2')">← LAB 2</button>
+      <button onclick="goToLab('lab4')">ไป LAB 4 · Statistics →</button>
+    </div>
+  </div>
 </section>
 
 <section id="lab4" class="panel hidden">
@@ -329,6 +365,18 @@
     <button class="ghost" onclick="resetLab('stats')">เริ่มใหม่</button>
   </div>
   <div id="statsFeedback"></div>
+
+  <div class="lab-footer-nav">
+    <div class="lab-footer-summary">
+      <span class="footer-status">LAB 4</span>
+      <strong>Statistical Data Analysis</strong>
+      <small>สถิติเป็นหลักฐาน ไม่ใช่คำตัดสินสุดท้าย</small>
+    </div>
+    <div class="lab-footer-actions">
+      <button class="ghost" onclick="goToLab('lab3')">← LAB 3</button>
+      <button onclick="goToLab('lab5')">ไป LAB 5 · Judgment →</button>
+    </div>
+  </div>
 </section>
 
 <section id="lab5" class="panel hidden">
@@ -378,6 +426,18 @@
     </label>
     <button onclick="checkLab5()">ตรวจความครบถ้วนของ Reasoning Ladder</button>
     <div id="lab5Feedback"></div>
+  </div>
+
+  <div class="lab-footer-nav final-footer">
+    <div class="lab-footer-summary">
+      <span class="footer-status">LAB 5</span>
+      <strong>Interpretation → Judgment → Recommendation</strong>
+      <small>เมื่อครบ 5 LAB ระบบจะเปิด Congratulations และ Certificate</small>
+    </div>
+    <div class="lab-footer-actions">
+      <button class="ghost" onclick="goToLab('lab4')">← LAB 4</button>
+      <button onclick="finishLabJourney()">ไป Congratulations →</button>
+    </div>
   </div>
 </section>
 
