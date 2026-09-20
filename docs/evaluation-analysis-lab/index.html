@@ -144,16 +144,14 @@
 <section id="lab2" class="panel hidden">
   <h2>LAB 2 — IOC Analysis</h2>
   <p class="lead">คำนวณ IOC รายข้อ แล้วตัดสินใจว่าจะ RETAIN / REVIEW / REVISE / REMOVE พร้อมเหตุผล</p>
-  <div class="learning-visual">
-    <div class="visual-heading"><strong>IOC Snapshot</strong><span class="dataset-tag">Synthetic Teaching Dataset</span></div>
-    <div class="ioc-bars" aria-label="IOC values by item">
-      <div><span>Q1</span><b style="--v:80%">0.80</b></div>
-      <div><span>Q2</span><b style="--v:20%">0.20</b></div>
-      <div><span>Q3</span><b style="--v:100%">1.00</b></div>
-      <div><span>Q4</span><b style="--v:60%">0.60</b></div>
-      <div class="negative"><span>Q5</span><b style="--v:20%">-0.20</b></div>
-    </div>
-    <p class="visual-caption">ใช้กราฟเพื่อเห็นรูปแบบของค่า แต่การตัดสินใจยังต้องพิจารณา wording, coverage และ expert comments ร่วมด้วย</p>
+  <div class="learning-visual flow-visual ioc-process" aria-label="IOC learning process">
+    <div class="flow-node"><span>1</span><strong>Expert Ratings</strong><small>อ่านค่า -1, 0, +1</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><span>2</span><strong>ΣR</strong><small>รวมคะแนนผู้เชี่ยวชาญ</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><span>3</span><strong>IOC</strong><small>คำนวณ ΣR / N</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><span>4</span><strong>Decision</strong><small>ตีความร่วมกับเหตุผล</small></div>
   </div>
   <details><summary>สูตร IOC</summary><div class="formula">IOC = ΣR / N</div><p>R = คะแนนผู้เชี่ยวชาญ (-1, 0, +1), N = จำนวนผู้เชี่ยวชาญ</p></details>
   <div id="iocTable"></div>
