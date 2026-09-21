@@ -2,7 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL="https://lztxpjsuzqvtgyasfnyj.supabase.co";
 const SUPABASE_KEY="sb_publishable_7bv5GR0-ksXJn91sRHV0Mg_k4nblIGI";
 const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
-let rows=[],filter="all";
+let rows=[],events=[],filter="all";
 const $=id=>document.getElementById(id);
 
 function fmtDate(v){
@@ -40,13 +40,18 @@ function render(){
 function escapeHtml(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
 async function loadRows(){
   $("statusMessage").textContent="กำลังโหลด…";
-  const {data,error}=await sb.rpc("hed3505_progress_dashboard");
+  const [{data,error},{data:eventData,error:eventError}]=await Promise.all([
+    sb.rpc("hed3505_progress_dashboard"),
+    sb.rpc("hed3505_progress_events",{p_limit:100})
+  ]);
   if(error){
     $("statusMessage").textContent="ไม่สามารถอ่าน Dashboard ได้: "+error.message;
     return;
   }
   rows=data||[];
+  events=eventError?[]:(eventData||[]);
   render();
+  renderTimeline();
 }
 async function updateSession(){
   const {data:{session}}=await sb.auth.getSession();
@@ -99,3 +104,28 @@ document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{
 });
 sb.auth.onAuthStateChange(()=>setTimeout(updateSession,0));
 updateSession();
+
+function eventLabel(e){
+  if(e.event_type==="CHECK_IN") return "Check-in";
+  if(e.event_type==="LAB_STARTED") return "เริ่ม LAB "+e.lab_no;
+  if(e.event_type==="LAB_COMPLETED") return "ทำ LAB "+e.lab_no+" เสร็จ";
+  if(e.event_type==="COURSE_COMPLETED") return "ทำครบ 5/5";
+  if(e.event_type==="CERTIFICATE_ISSUED") return "ออก Certificate";
+  return e.event_type;
+}
+function renderTimeline(){
+  const box=$("timeline");
+  if(!box)return;
+  if(!events.length){
+    box.innerHTML='<div class="timeline-empty">ยังไม่มีประวัติที่ถูกบันทึกหลังเปิดใช้ Timeline</div>';
+    return;
+  }
+  box.innerHTML=events.map(e=>
+    '<div class="timeline-item">'+
+      '<div class="timeline-time">'+fmtDate(e.event_at)+'</div>'+
+      '<div class="timeline-main"><strong>'+escapeHtml(e.display_name)+'</strong> · '+escapeHtml(e.student_id)+
+      '<span class="timeline-tag">'+escapeHtml(eventLabel(e))+'</span></div>'+
+    '</div>'
+  ).join("");
+}
+if($("timelineRefreshBtn")) $("timelineRefreshBtn").onclick=loadRows;
