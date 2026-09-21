@@ -50,6 +50,9 @@ async function loadRows(){
 }
 async function updateSession(){
   const {data:{session}}=await sb.auth.getSession();
+  const email=session?.user?.email||session?.user?.user_metadata?.email||"—";
+  if($("authIdentity"))$("authIdentity").textContent="บัญชีที่ระบบเห็น: "+email;
+  if($("sessionIdentity"))$("sessionIdentity").textContent="บัญชีผู้สอน: "+email;
   if(session){
     $("loginPanel").classList.add("hidden");
     $("dashboardPanel").classList.remove("hidden");
