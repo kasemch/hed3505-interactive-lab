@@ -41,7 +41,7 @@ function setSyncStatus(text,state=""){
   el.textContent=text;
   el.className="sync-status "+state;
 }
-async function syncProgress(){
+async function syncProgress(options={}){
   const learner=getLearner();
   if(!learner)return;
   const completion=load("completion",null);
@@ -71,10 +71,28 @@ async function syncProgress(){
       const msg=await res.text();
       throw new Error(msg||("HTTP "+res.status));
     }
-    setSyncStatus("ซิงก์สถานะแล้ว","synced");
+    setSyncStatus(options.manual ? "ซิงก์ความก้าวหน้าเดิมแล้ว" : "ซิงก์สถานะแล้ว","synced");
+    return true;
   }catch(e){
     console.warn("HED3505 progress sync failed",e);
     setSyncStatus("เก็บในเครื่องแล้ว · รอซิงก์","offline");
+    return false;
+  }
+}
+
+async function syncExistingProgress(){
+  const learner=getLearner();
+  if(!learner){
+    alert("กรุณา Check-in ก่อน");
+    return;
+  }
+  const btn=document.getElementById("syncExistingBtn");
+  if(btn){btn.disabled=true;btn.textContent="กำลัง Sync…";}
+  const ok=await syncProgress({manual:true});
+  if(btn){btn.disabled=false;btn.textContent=ok?"Synced ✓":"ลอง Sync อีกครั้ง";}
+  if(ok){
+    alert("ส่งสถานะความก้าวหน้าที่มีอยู่ในเครื่องนี้ขึ้น Dashboard ของผู้สอนแล้ว");
+    setTimeout(()=>{if(btn)btn.textContent="Sync my existing progress";},2200);
   }
 }
 function scheduleProgressSync(delay=900){
