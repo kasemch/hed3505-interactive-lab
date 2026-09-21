@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HED3505 Instructor Progress Dashboard</title>
+<link rel="stylesheet" href="instructor-dashboard.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <p class="eyebrow">HED3505 · INSTRUCTOR VIEW</p>
+    <h1>Student Progress Dashboard</h1>
+    <p>ติดตามเฉพาะการเข้าใช้งานและความก้าวหน้า ไม่แสดงคำตอบรายข้อ</p>
+  </div>
+</header>
+<main class="wrap">
+  <section id="loginPanel" class="panel">
+    <h2>เข้าสู่ระบบสำหรับผู้สอน</h2>
+    <p>ใช้บัญชี Google ที่เชื่อมกับ HEPE Sandbox เพื่อดูสถานะนักศึกษา</p>
+    <button id="loginBtn">เข้าสู่ระบบด้วย Google</button>
+    <div id="loginMessage"></div>
+  </section>
+
+  <section id="dashboardPanel" class="hidden">
+    <div class="toolbar">
+      <div>
+        <p class="eyebrow dark">HED3505 PROGRESS</p>
+        <h2>ภาพรวมการทำกิจกรรม</h2>
+      </div>
+      <div class="actions">
+        <button id="refreshBtn">รีเฟรช</button>
+        <button id="logoutBtn" class="ghost">ออกจากระบบ</button>
+      </div>
+    </div>
+
+    <div class="metric-grid">
+      <article><span id="mEntered">0</span><small>เข้ามาแล้ว</small></article>
+      <article><span id="mWorking">0</span><small>กำลังทำ</small></article>
+      <article><span id="mCompleted">0</span><small>ครบ 5/5</small></article>
+      <article><span id="mRecent">0</span><small>ใช้งานใน 24 ชม.</small></article>
+    </div>
+
+    <div class="filter-row">
+      <button data-filter="all" class="active">ทั้งหมด</button>
+      <button data-filter="working">กำลังทำ</button>
+      <button data-filter="complete">ครบ 5/5</button>
+    </div>
+
+    <section class="panel">
+      <div id="statusMessage" class="status-message">กำลังโหลด…</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>รหัสนักศึกษา</th><th>ชื่อ</th><th>LAB 1</th><th>LAB 2</th><th>LAB 3</th><th>LAB 4</th><th>LAB 5</th><th>Progress</th><th>ล่าสุด</th><th>Certificate</th>
+            </tr>
+          </thead>
+          <tbody id="progressBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>
+<script type="module" src="instructor-dashboard.js"></script>
+</body>
+</html>
