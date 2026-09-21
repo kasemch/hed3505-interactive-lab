@@ -13,6 +13,75 @@ const relData=[
 const statsData=[[6,8],[7,9],[5,7],[8,9],[6,8],[7,8],[4,7],[5,7],[6,8],[7,9],[5,7],[6,8]];
 const methodKey={a:"Cronbach's alpha",b:"KR-20",c:"Inter-rater reliability",d:"Test–retest reliability"};
 const LEARNER_KEY=P+"learner";
+
+const PROGRESS_URL="https://lztxpjsuzqvtgyasfnyj.supabase.co";
+const PROGRESS_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6dHhwanN1enF2dGd5YXNmbnlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzMzMwMjQsImV4cCI6MjEwMzkwOTAyNH0.GRM1Pp_if-AgtZxUGbZggF2_zxrqIzsfhrOWl1oGBlo";
+const PROGRESS_TOKEN_KEY=P+"progress_token";
+let progressSyncTimer=null;
+
+function getProgressToken(){
+  let t=localStorage.getItem(PROGRESS_TOKEN_KEY);
+  if(t)return t;
+  try{
+    t=crypto.randomUUID()+"-"+crypto.randomUUID();
+  }catch(e){
+    t=Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+"-"+Math.random().toString(36).slice(2);
+  }
+  localStorage.setItem(PROGRESS_TOKEN_KEY,t);
+  return t;
+}
+function labStatus(key){
+  if(isLabComplete(key))return "COMPLETED";
+  if(isLabStarted(key))return "IN_PROGRESS";
+  return "NOT_STARTED";
+}
+function setSyncStatus(text,state=""){
+  const el=document.getElementById("syncStatus");
+  if(!el)return;
+  el.textContent=text;
+  el.className="sync-status "+state;
+}
+async function syncProgress(){
+  const learner=getLearner();
+  if(!learner)return;
+  const completion=load("completion",null);
+  const payload={
+    p_student_id:learner.student_id,
+    p_display_name:learner.display_name,
+    p_client_token:getProgressToken(),
+    p_lab1_status:labStatus("lab1"),
+    p_lab2_status:labStatus("ioc"),
+    p_lab3_status:labStatus("rel"),
+    p_lab4_status:labStatus("stats"),
+    p_lab5_status:labStatus("lab5"),
+    p_certificate_id:completion?.certificate_id||null
+  };
+  setSyncStatus("กำลังซิงก์…","syncing");
+  try{
+    const res=await fetch(PROGRESS_URL+"/rest/v1/rpc/hed3505_progress_sync",{
+      method:"POST",
+      headers:{
+        "apikey":PROGRESS_ANON_KEY,
+        "Authorization":"Bearer "+PROGRESS_ANON_KEY,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(payload)
+    });
+    if(!res.ok){
+      const msg=await res.text();
+      throw new Error(msg||("HTTP "+res.status));
+    }
+    setSyncStatus("ซิงก์สถานะแล้ว","synced");
+  }catch(e){
+    console.warn("HED3505 progress sync failed",e);
+    setSyncStatus("เก็บในเครื่องแล้ว · รอซิงก์","offline");
+  }
+}
+function scheduleProgressSync(delay=900){
+  clearTimeout(progressSyncTimer);
+  progressSyncTimer=setTimeout(syncProgress,delay);
+}
+
 const labLabels=[
   ["lab1","LAB 1","Blueprint"],
   ["ioc","LAB 2","IOC"],
@@ -41,6 +110,7 @@ function enterLab(){
   }
   saveLearner({student_id,display_name,checkin_at:new Date().toISOString()});
   openLabApp();
+  scheduleProgressSync(0);
 }
 function changeLearner(){
   if(confirm("ออกจาก session ปัจจุบันและกลับไปหน้า Check-in? คำตอบใน LAB จะยังคงอยู่ใน browser นี้")){
@@ -83,6 +153,7 @@ function ensureCompletionRecord(){
       certificate_id:"HED3505-"+dateISO.replaceAll("-","")+"-"+hashText((learner.student_id||"")+"|"+dateISO)
     };
     save("completion",rec);
+    scheduleProgressSync(0);
   }
   return rec;
 }
@@ -217,7 +288,7 @@ function renderLab1(){
  });
 }
 function saveLab1(){
- let s={};["lab1Indicator","lab1Evidence","lab1Instrument","lab1Claim","lab1Reason"].forEach(id=>s[id]=document.getElementById(id).value);save("lab1",s); if(getLearner())renderDashboard()
+ let s={};["lab1Indicator","lab1Evidence","lab1Instrument","lab1Claim","lab1Reason"].forEach(id=>s[id]=document.getElementById(id).value);save("lab1",s); if(getLearner()){renderDashboard();scheduleProgressSync()}
 }
 function checkLab1(){
  saveLab1();let s=load("lab1",{}),score=0,notes=[];
@@ -252,7 +323,7 @@ function renderIOC(){
  });
  iocReason.value=s.reason??""; iocReason.oninput=saveIOC;
 }
-function saveIOC(){let s={reason:iocReason.value};iocRows.forEach((r,i)=>{s["sum"+i]=document.querySelector('[data-sum="'+i+'"]').value.replace("−","-");s["ioc"+i]=document.querySelector('[data-ioc="'+i+'"]').value.replace("−","-").replace(",",".");s["dec"+i]=document.querySelector('[data-dec="'+i+'"]').value});save("ioc",s); if(getLearner())renderDashboard()}
+function saveIOC(){let s={reason:iocReason.value};iocRows.forEach((r,i)=>{s["sum"+i]=document.querySelector('[data-sum="'+i+'"]').value.replace("−","-");s["ioc"+i]=document.querySelector('[data-ioc="'+i+'"]').value.replace("−","-").replace(",",".");s["dec"+i]=document.querySelector('[data-dec="'+i+'"]').value});save("ioc",s); if(getLearner()){renderDashboard();scheduleProgressSync()}}
 function checkIOC(){saveIOC();let s=load("ioc",{}),correct=0; iocRows.forEach((r,i)=>{if(Number(s["sum"+i])===r.sum && Math.abs(Number(s["ioc"+i])-r.ioc)<.011)correct++});
  const resultChart='<div class="post-answer-visual"><div class="visual-heading"><strong>เฉลยหลังทำกิจกรรม · IOC Pattern</strong><span class="dataset-tag">Synthetic Teaching Dataset</span></div><div class="ioc-bars" aria-label="IOC answer values by item">'+
  iocRows.map(r=>'<div class="'+(r.ioc<0?'negative':'')+'"><span>'+r.item+'</span><b style="--v:'+Math.max(8,Math.abs(r.ioc)*100)+'%">'+r.ioc.toFixed(2)+'</b></div>').join('')+
@@ -270,7 +341,7 @@ function saveRel(){
  let s={};
  ["a","b","c","d"].forEach(id=>s["m_"+id]=document.getElementById("m_"+id).value);
  ["relPrediction","relPredictionReason","alphaMeaning","alphaLimit","suspectItem","suspectReason","deleteI3","conflictReason","mysteryDecision","mysteryReason","finalDecision","finalEvidence1","finalEvidence2","finalRisk","finalAction"].forEach(id=>{let el=document.getElementById(id);if(el)s[id]=el.value});
- save("rel",s); if(getLearner())renderDashboard()
+ save("rel",s); if(getLearner()){renderDashboard();scheduleProgressSync()}
 }
 function checkReliabilityMethods(){
  saveRel();let s=load("rel",{}),c=0;
@@ -293,7 +364,7 @@ function renderStats(){
  statsDataEl=document.getElementById("statsData");statsDataEl.innerHTML='<div class="table-wrap"><table><thead><tr><th>Learner</th><th>Pre</th><th>Post</th></tr></thead><tbody>'+statsData.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</tbody></table></div>';
  let s=load("stats",{});["preMean","preSD","postMean","postSD","meanChange","statResult","statInterpret","statLimit","causalDecision","causalReason"].forEach(id=>{document.getElementById(id).value=s[id]??"";document.getElementById(id).oninput=saveStats});
 }
-function saveStats(){let s={};["preMean","preSD","postMean","postSD","meanChange","statResult","statInterpret","statLimit","causalDecision","causalReason"].forEach(id=>s[id]=document.getElementById(id).value);save("stats",s); if(getLearner())renderDashboard()}
+function saveStats(){let s={};["preMean","preSD","postMean","postSD","meanChange","statResult","statInterpret","statLimit","causalDecision","causalReason"].forEach(id=>s[id]=document.getElementById(id).value);save("stats",s); if(getLearner()){renderDashboard();scheduleProgressSync()}}
 function near(v,t,tol=.03){return Math.abs(Number(v)-t)<=tol}
 function checkStats(){saveStats();let s=load("stats",{});let c=0;if(near(s.preMean,6,.01))c++;if(near(s.preSD,1.13,.04))c++;if(near(s.postMean,7.92,.04))c++;if(near(s.postSD,.79,.04))c++;if(near(s.meanChange,1.92,.04))c++;let causalOK=(s.causalDecision==='OVERSTATED'||s.causalDecision==='NOT ENOUGH EVIDENCE');statsFeedback.innerHTML='<div class="'+(c===5&&causalOK?'good':'note')+'"><strong>'+(c===5&&causalOK?'✓ Evidence-boundary respected':'ทบทวนข้อมูลและขอบเขตข้อสรุป')+'</strong><br>ค่าพรรณนาถูก '+c+'/5 ค่า'+(c===5?'':' — ตรวจ mean และ sample SD อีกครั้ง')+'<br>Causal reasoning: '+(causalOK?'ผ่าน — ไม่สรุปเหตุเกินหลักฐาน':'ทบทวน Evaluation Design และ alternative explanations')+'<div class="micro-review"><b>Key idea:</b> pre–post change แสดงการเปลี่ยนแปลง แต่ยังไม่เพียงพอที่จะยืนยัน causal effect ของโปรแกรม</div></div>'; maybeCelebrate()}
 
@@ -304,7 +375,7 @@ function renderLab5(){
    let el=document.getElementById(id); if(!el)return; el.value=s[id]??""; el.oninput=saveLab5;
  });
 }
-function saveLab5(){let s={};["lab5Fact","lab5Interpret","lab5Judgment","lab5Recommendation","lab5Missing","lab5Need"].forEach(id=>s[id]=document.getElementById(id).value);save("lab5",s); if(getLearner())renderDashboard()}
+function saveLab5(){let s={};["lab5Fact","lab5Interpret","lab5Judgment","lab5Recommendation","lab5Missing","lab5Need"].forEach(id=>s[id]=document.getElementById(id).value);save("lab5",s); if(getLearner()){renderDashboard();scheduleProgressSync()}}
 function checkLab5(){
  saveLab5();let s=load("lab5",{}),fields=["lab5Fact","lab5Interpret","lab5Judgment","lab5Recommendation","lab5Missing","lab5Need"];
  let filled=fields.filter(k=>(s[k]||"").trim().length>=12).length;
@@ -324,4 +395,4 @@ function evidenceText(){
 function renderEvidence(){evidencePreview.textContent=evidenceText()}
 async function copyEvidence(){let t=evidenceText();try{await navigator.clipboard.writeText(t);alert("คัดลอกแล้ว")}catch(e){renderEvidence()}}
 function downloadEvidence(){let t=evidenceText(),b=new Blob([t],{type:"text/markdown;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="HED3505_Evaluation_Analysis_Lab_Evidence.md";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
-renderLab1();renderIOC();renderReliability();renderStats();renderLab5();bootLearnerGate();
+renderLab1();renderIOC();renderReliability();renderStats();renderLab5();bootLearnerGate();if(getLearner())scheduleProgressSync(600);
