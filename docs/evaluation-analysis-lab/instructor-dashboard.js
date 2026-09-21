@@ -63,26 +63,19 @@ async function updateSession(){
   }
 }
 $("loginBtn").onclick=async()=>{
-  $("loginMessage").textContent="กำลังเปิด Google Sign-in สำหรับ kasem.ch@outlook.com…";
+  $("loginMessage").textContent="กำลังเปิด Google Sign-in…";
   const {data,error}=await sb.auth.signInWithOAuth({
     provider:"google",
     options:{
       redirectTo:location.origin+location.pathname,
-      queryParams:{
-        prompt:"select_account",
-        login_hint:"kasem.ch@outlook.com"
-      }
+      queryParams:{prompt:"select_account"}
     }
   });
   if(error){
     $("loginMessage").textContent="Google Sign-in ไม่สำเร็จ: "+error.message;
     return;
   }
-  if(data?.url){
-    location.assign(data.url);
-    return;
-  }
-  $("loginMessage").textContent="ไม่พบ URL สำหรับเปิด Google Sign-in";
+  if(data?.url) location.assign(data.url);
 };
 
 $("emailLoginBtn").onclick=async()=>{
@@ -96,7 +89,7 @@ $("emailLoginBtn").onclick=async()=>{
   });
   $("loginMessage").textContent=error
     ? "ส่งลิงก์ไม่สำเร็จ: "+error.message
-    : "ส่งลิงก์เข้าสู่ระบบแล้ว กรุณาเปิดอีเมล kasem.ch@outlook.com";
+    : "ส่งลิงก์เข้าสู่ระบบแล้ว กรุณาเปิดอีเมล kasem.ch@outlook.com แล้วกดลิงก์ Sign in";
 };
 $("logoutBtn").onclick=async()=>{await sb.auth.signOut();await updateSession()};
 $("refreshBtn").onclick=loadRows;
