@@ -41,3 +41,5 @@
 @media(max-width:680px){.signed-input-wrap{min-width:58px}.signed-input-wrap input{min-width:54px;padding:9px 6px;text-align:center}.sign-toggle{min-height:32px;padding:4px 5px;font-size:.72rem}}
 
 .sync-status{display:block;margin-top:3px;font-size:.78rem;color:#6b6f75}.sync-status.syncing{color:#8a6a23}.sync-status.synced{color:#28746a}.sync-status.offline{color:#a8574e}
+
+.primary-soft{background:var(--teal,#3C8C86);color:#fff;border:0}.primary-soft:disabled{opacity:.6;cursor:wait}
