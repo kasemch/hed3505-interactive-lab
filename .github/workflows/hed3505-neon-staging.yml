@@ -1,0 +1,31 @@
+name: HED3505 Neon Staging Build
+on:
+  push:
+    branches: [hed3505-final-class-neon-staging-01]
+    paths:
+      - 'neon-final-class/**'
+      - '.github/workflows/hed3505-neon-staging.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: neon-final-class
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: neon-final-class/package-lock.json
+      - run: npm install --package-lock-only
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-neon-staging-build
+          path: neon-final-class/dist
+          retention-days: 7
