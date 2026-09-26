@@ -60,9 +60,11 @@ async function loadMine(){
   $('myWork').innerHTML='<h3>'+safe(activeSession.title)+'</h3><p>สถานะ: '+safe(open)+'</p>'+
     '<h4>เอกสารที่เปิดแล้ว</h4>'+docs.map(d=>'<details class="item"><summary>'+safe(d.title)+' · รอบ '+d.round_no+'</summary><pre>'+safe(JSON.stringify(d.content,null,2))+'</pre></details>').join('')+
     '<h4>คำตอบของฉัน</h4>'+answers.map(a=>'<div class="item">'+safe(a.stage)+' · ฉบับ '+a.revision_no+'</div>').join('')+
+    '<button id="refreshEvidence" class="secondary" type="button">ตรวจสอบหลักฐานใหม่</button>'+
     '<form id="answerForm"><label for="stage">ขั้นกิจกรรม</label><select id="stage" required></select><label for="answer">คำตอบ (ข้อมูลจำลองเท่านั้น)</label><textarea id="answer" required rows="6" maxlength="10000"></textarea><button type="submit">บันทึกฉบับใหม่</button></form><p id="answerMessage" role="status"></p>';
-  const choices=stages.filter(([v])=>open==='ROUND2_OPEN'||(open==='ROUND1_OPEN'&&firstRound.has(v)));
+  const choices=stages.filter(([v])=>open==='ROUND2_OPEN'? !firstRound.has(v) : (open==='ROUND1_OPEN'&&firstRound.has(v)));
   $('stage').innerHTML=choices.map(([v,t])=>'<option value="'+v+'">'+safe(t)+'</option>').join('');
+  $('refreshEvidence').onclick=()=>loadMine().catch(err=>note('answerMessage',fail(err),true));
   $('answerForm').onsubmit=async(e)=>{
     e.preventDefault();const stage=$('stage').value,answer=$('answer').value.trim();
     if(!answer)return;
@@ -78,14 +80,34 @@ async function loadMine(){
   };
 }
 async function loadTeacher(){
-  const [participants,responses]=await Promise.all([
+  const [sessions,participants,responses]=await Promise.all([
+    checked(db.from('class_sessions').select('id,session_code,title,phase,capacity,round2_opened_at').order('created_at',{ascending:false})),
     checked(db.from('participants').select('id,session_id,student_id,display_name,joined_at').order('joined_at',{ascending:false})),
-    checked(db.from('responses').select('participant_id,stage,revision_no,submitted_at').order('submitted_at',{ascending:false}))
+    checked(db.from('responses').select('id,participant_id,session_id,stage,revision_no,submitted_at').order('submitted_at',{ascending:false}))
   ]);
-  const counts=new Map();
-  for(const r of responses)counts.set(r.participant_id,(counts.get(r.participant_id)||0)+1);
-  $('teacherData').innerHTML='<p>ผู้เข้าร่วม '+participants.length+' · คำตอบ '+responses.length+'</p>'+
-    participants.map(p=>'<div class="item"><strong>'+safe(p.display_name)+'</strong> · '+safe(p.student_id)+' · ส่ง '+(counts.get(p.id)||0)+' ฉบับ</div>').join('');
+  const initial=new Set(responses.filter(r=>r.stage==='INITIAL_JUDGMENT').map(r=>r.participant_id));
+  $('teacherData').innerHTML=sessions.map(s=>{
+    const people=participants.filter(p=>p.session_id===s.id);
+    const done=people.filter(p=>initial.has(p.id)).length;
+    const ready=s.phase==='ROUND1_OPEN' && people.length>0 && done===people.length;
+    const summary='<div class="item"><strong>'+safe(s.title)+'</strong> · '+safe(s.session_code)+
+      '<p>สถานะ '+safe(s.phase)+' · ผู้เข้าร่วม '+people.length+'/'+s.capacity+
+      ' · Initial Judgment '+done+'/'+people.length+'</p>';
+    const list=people.map(p=>'<div class="item">'+safe(p.display_name)+' · '+safe(p.student_id)+
+      ' · คำตอบ '+responses.filter(r=>r.participant_id===p.id).length+' ฉบับ</div>').join('');
+    const button=s.phase==='ROUND1_OPEN'?'<button type="button" data-open-round2="'+safe(s.id)+'" '+(ready?'':'disabled')+'>เปิดหลักฐานรอบที่ 2</button>':'';
+    return summary+list+button+'</div>';
+  }).join('') || '<p>ยังไม่มีรอบกิจกรรมทดลอง</p>';
+  for(const button of $('teacherData').querySelectorAll('[data-open-round2]')){
+    button.onclick=async()=>{
+      if(!confirm('ยืนยันเปิดหลักฐานรอบที่ 2? การส่ง Initial Judgment จะถูกล็อกทันที'))return;
+      button.disabled=true;
+      try{
+        await checked(db.rpc('open_round2',{p_session_id:button.dataset.openRound2}));
+        await refresh();
+      }catch(err){alert(fail(err));button.disabled=false;}
+    };
+  }
 }
 $('otpForm').onsubmit=async(e)=>{
   e.preventDefault();const email=$('email').value.trim();
