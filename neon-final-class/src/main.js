@@ -23,6 +23,13 @@ const stages = [
   ['POSTTEST','Posttest']
 ];
 const firstRound = new Set(['PRETEST','INITIAL_JUDGMENT','EVIDENCE_REGISTER']);
+const rubric = [
+  ['evidence_extraction','สกัดหลักฐานและอ้างแหล่ง'],
+  ['denominator_conflict','ตรวจตัวหารและความขัดแย้ง'],
+  ['relevance','จำแนกความเกี่ยวข้องของข้อมูล'],
+  ['instrument_limits','ประเมินคุณภาพและข้อจำกัด'],
+  ['judgment_recommendation','Judgment & Recommendation']
+];
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function note(id,message,error=false){$(id).textContent=message;$(id).className=error?'danger':'ok';}
 function fail(e){return e?.message || 'ไม่สามารถทำรายการได้ โปรดลองใหม่';}
@@ -84,8 +91,9 @@ async function loadTeacher(){
   const [sessions,participants,responses]=await Promise.all([
     checked(db.from('class_sessions').select('id,session_code,title,phase,capacity,round2_opened_at').order('created_at',{ascending:false})),
     checked(db.from('participants').select('id,session_id,student_id,display_name,joined_at').order('joined_at',{ascending:false})),
-    checked(db.from('responses').select('id,participant_id,session_id,stage,revision_no,submitted_at').order('submitted_at',{ascending:false}))
+    checked(db.from('responses').select('id,participant_id,session_id,stage,revision_no,submitted_at,answer').order('submitted_at',{ascending:false}))
   ]);
+  const assessments=await checked(db.from('assessments').select('response_id,total_score,criteria,feedback,assessed_at').order('assessed_at',{ascending:false}));
   const initial=new Set(responses.filter(r=>r.stage==='INITIAL_JUDGMENT').map(r=>r.participant_id));
   $('teacherData').innerHTML=sessions.map(s=>{
     const people=participants.filter(p=>p.session_id===s.id);
@@ -99,6 +107,48 @@ async function loadTeacher(){
     const button=s.phase==='ROUND1_OPEN'?'<button type="button" data-open-round2="'+safe(s.id)+'" '+(ready?'':'disabled')+'>เปิดหลักฐานรอบที่ 2</button>':'';
     return summary+list+button+'</div>';
   }).join('') || '<p>ยังไม่มีรอบกิจกรรมทดลอง</p>';
+  // Individual evidence and scoring stay in the instructor-only view; no answer key is shipped to students.
+  const assessable=responses.filter(r=>r.stage==='REVISED_JUDGMENT'||r.stage==='DECISION_BRIEF');
+  const personById=new Map(participants.map(p=>[p.id,p]));
+  const existingByResponse=new Map();
+  for(const a of assessments)if(!existingByResponse.has(a.response_id))existingByResponse.set(a.response_id,a);
+  $('teacherData').insertAdjacentHTML('beforeend',
+    '<h3>ประเมินผลงานรายบุคคล (ฉบับที่ส่งแล้ว)</h3>'+
+    (assessable.length?assessable.map(r=>{
+      const person=personById.get(r.participant_id);
+      const previous=existingByResponse.get(r.id);
+      return '<details class="item"><summary>'+safe(person?.display_name||'ผู้เรียน')+' · '+safe(r.stage)+' · ฉบับ '+r.revision_no+
+        (previous?' · คะแนนล่าสุด '+safe(previous.total_score)+'/10':' · ยังไม่ประเมิน')+'</summary>'+
+        '<pre>'+safe(JSON.stringify(r.answer,null,2))+'</pre>'+
+        '<form data-assess="'+safe(r.id)+'"><p>ให้คะแนนตาม Rubric v5.1 (0, 1 หรือ 2 คะแนนต่อเกณฑ์)</p>'+
+        rubric.map(([key,label])=>'<label>'+safe(label)+'</label><select name="'+key+'" required>'+
+          [0,1,2].map(n=>'<option value="'+n+'" '+(previous?.criteria?.[key]===n?'selected':'')+'>'+n+'</option>').join('')+'</select>').join('')+
+        '<label>ข้อเสนอแนะรายบุคคล</label><textarea name="feedback" maxlength="4000" rows="3">'+safe(previous?.feedback||'')+'</textarea>'+
+        '<output>รวม: '+safe(previous?.total_score??0)+'/10</output><button type="submit">บันทึกการประเมินฉบับใหม่</button>'+
+        '<p role="status" class="assessment-message"></p></form></details>';
+    }).join(''):'<p>ยังไม่มี Revised Judgment หรือ Decision Brief ให้ประเมิน'));
+  for(const form of $('teacherData').querySelectorAll('[data-assess]')){
+    const updateTotal=()=>{
+      const total=rubric.reduce((sum,[key])=>sum+Number(form.elements.namedItem(key).value),0);
+      form.querySelector('output').textContent='รวม: '+total+'/10';
+      return total;
+    };
+    form.onchange=updateTotal;
+    form.onsubmit=async(e)=>{
+      e.preventDefault();
+      const btn=form.querySelector('button'),status=form.querySelector('.assessment-message');
+      const criteria=Object.fromEntries(rubric.map(([key])=>[key,Number(form.elements.namedItem(key).value)]));
+      btn.disabled=true;
+      try{
+        await checked(db.from('assessments').insert({
+          response_id:form.dataset.assess,assessed_by_subject:signedIn.id,rubric_version:'v5.1',
+          criteria,total_score:updateTotal(),feedback:form.elements.namedItem('feedback').value.trim()
+        }));
+        status.textContent='บันทึกคะแนนแล้ว (เก็บเป็นฉบับใหม่ ไม่เขียนทับ)';
+        await loadTeacher();
+      }catch(err){status.textContent=fail(err);btn.disabled=false;}
+    };
+  }
   for(const button of $('teacherData').querySelectorAll('[data-open-round2]')){
     button.onclick=async()=>{
       if(!confirm('ยืนยันเปิดหลักฐานรอบที่ 2? การส่ง Initial Judgment จะถูกล็อกทันที'))return;
