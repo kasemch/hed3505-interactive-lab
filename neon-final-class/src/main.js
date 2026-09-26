@@ -89,7 +89,7 @@ async function loadTeacher(){
   $('teacherData').innerHTML=sessions.map(s=>{
     const people=participants.filter(p=>p.session_id===s.id);
     const done=people.filter(p=>initial.has(p.id)).length;
-    const ready=s.phase==='ROUND1_OPEN' && people.length>0 && done===people.length;
+    const ready=s.phase==='ROUND1_OPEN' && people.length===s.capacity && done===people.length;
     const summary='<div class="item"><strong>'+safe(s.title)+'</strong> · '+safe(s.session_code)+
       '<p>สถานะ '+safe(s.phase)+' · ผู้เข้าร่วม '+people.length+'/'+s.capacity+
       ' · Initial Judgment '+done+'/'+people.length+'</p>';
