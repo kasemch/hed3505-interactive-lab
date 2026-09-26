@@ -8,7 +8,7 @@
 - Initial Judgment is writable only in ROUND1_OPEN. Revised Judgment requires ROUND2_OPEN and a stored Initial Judgment.
 - The `open_round2` RPC requires an instructor, at least one participant, and an Initial Judgment from every enrolled participant; it locks the session row before transition.
 - Participant join uses a row-locking capacity trigger. Responses and events are append-only. Feedback response reference is constrained to the same session.
-- Assessment insert requires instructor subject; five 0–2 rubric criteria must sum to the 0–10 total.
+- Assessment insert requires instructor subject; five 0–2 rubric criteria must sum to the 0–10 total. Instructor UI can review individual Revised Judgment/Decision Brief and append rubric assessment; learner UI reads only its own score/feedback through RLS.
 
 ## Executed SQL checks (staging)
 - A synthetic invitation-only session was tested without a JWT: zero sessions and zero invitations were visible; the transaction was rolled back.
@@ -17,6 +17,7 @@
 - Capacity test accepted seven synthetic participants and rejected an eighth; the transaction was rolled back.
 - An unauthenticated attempt to call the Round 2 transition was rejected; session remained ROUND1_OPEN.
 - Isolated GitHub Actions build and static-preview HTTP smoke passed. This does not verify interactive browser auth or API calls.
+- A rollback-only grading test verified that an authenticated role without a valid instructor JWT could not insert a grade, while the privileged fixture accepted a valid 9/10 rubric record; all synthetic rows were rolled back.
 - No actual students, submissions, or instructor allowlist entries have been imported.
 
 ## Remaining acceptance gates — do not mark passed without evidence
@@ -24,7 +25,7 @@
 2. Browser smoke and two distinct signed test identities. Verify A cannot read or write B's records; instructor role works only after explicit administrative allowlist. An unauthenticated SQL role test is not a substitute for two-user JWT testing.
 3. Invite seven verified test subjects using a privileged path; end-to-end seven-participant rehearsal with real test JWTs, locked Initial Judgment, instructor Round 2 transition, and controlled evidence reveal.
 4. Match case narrative and instructor answer key to approved v5.1 source; never insert a guessed case or publish the instructor key to student-facing records.
-5. Grade and export QA; verify real-device mobile acceptance and institutional privacy requirements.
+5. Grading UI and learner score/feedback require real test-JWT end-to-end QA; export QA, real-device mobile acceptance and institutional privacy requirements remain.
 6. Explicit human approval for any real-student or public release. Keep this PR draft and unmerged.
 
 ## Administrative procedure
