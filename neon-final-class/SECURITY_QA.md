@@ -3,14 +3,15 @@
 **Scope:** Neon project `soft-lab-14586372`, branch `hed3505-final-class-staging`, database `neondb`, schema `hed3505_final_class`. This document is a test record, not a production release authorization.
 
 ## Completed backend controls
-- 8 RLS-enabled tables and 11 policies; no anonymous table grants. Instructor access is checked by server-side authenticated subject, never a client email string.
-- A participant can read only their own participant/response rows. Case documents require session membership and publication. Round 2 additionally requires the session to have been opened by an instructor and the requesting participant to have a stored Initial Judgment.
+- 9 RLS-enabled tables; no anonymous table grants. Instructor access is checked by server-side authenticated subject, never a client email string.
+- Sessions are invitation-only via the server-side session_invites roster, keyed by actual auth subject. Uninvited authenticated users cannot enumerate session codes or join. A participant can read only their own participant/response rows. Case documents require session membership and publication. Round 2 additionally requires the session to have been opened by an instructor and the requesting participant to have a stored Initial Judgment.
 - Initial Judgment is writable only in ROUND1_OPEN. Revised Judgment requires ROUND2_OPEN and a stored Initial Judgment.
 - The `open_round2` RPC requires an instructor, at least one participant, and an Initial Judgment from every enrolled participant; it locks the session row before transition.
 - Participant join uses a row-locking capacity trigger. Responses and events are append-only. Feedback response reference is constrained to the same session.
 - Assessment insert requires instructor subject; five 0–2 rubric criteria must sum to the 0–10 total.
 
 ## Executed SQL checks (staging)
+- A synthetic invitation-only session was tested without a JWT: zero sessions and zero invitations were visible; the transaction was rolled back.
 - Seven synthetic participants and two synthetic documents were created in a rollback-only transaction. Without a valid JWT, the authenticated role saw zero participant rows and zero case documents. Rollback left zero sessions and zero participants.
 - Rubric 2+2+1+2+2=9 accepted; incorrect total 10 rejected; criterion value 3 rejected.
 - Capacity test accepted seven synthetic participants and rejected an eighth; the transaction was rolled back.
@@ -21,7 +22,7 @@
 ## Remaining acceptance gates — do not mark passed without evidence
 1. Auth provider config: email verification is currently disabled for email/password sign-up. Verify and harden before real use; check email OTP delivery, session and Google callback.
 2. Browser smoke and two distinct signed test identities. Verify A cannot read or write B's records; instructor role works only after explicit administrative allowlist. An unauthenticated SQL role test is not a substitute for two-user JWT testing.
-3. End-to-end seven-participant rehearsal with real test JWTs, locked Initial Judgment, instructor Round 2 transition, and controlled evidence reveal.
+3. Invite seven verified test subjects using a privileged path; end-to-end seven-participant rehearsal with real test JWTs, locked Initial Judgment, instructor Round 2 transition, and controlled evidence reveal.
 4. Match case narrative and instructor answer key to approved v5.1 source; never insert a guessed case or publish the instructor key to student-facing records.
 5. Grade and export QA; verify real-device mobile acceptance and institutional privacy requirements.
 6. Explicit human approval for any real-student or public release. Keep this PR draft and unmerged.
