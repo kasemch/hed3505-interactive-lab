@@ -5,6 +5,10 @@ on:
     paths:
       - 'neon-final-class/**'
       - '.github/workflows/hed3505-neon-staging.yml'
+  pull_request:
+    paths:
+      - 'neon-final-class/**'
+      - '.github/workflows/hed3505-neon-staging.yml'
   workflow_dispatch:
 permissions:
   contents: read
