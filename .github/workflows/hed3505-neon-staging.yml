@@ -1,0 +1,42 @@
+name: HED3505 Neon Staging Build
+on:
+  push:
+    branches: [hed3505-final-class-neon-staging-01]
+    paths:
+      - 'neon-final-class/**'
+      - '.github/workflows/hed3505-neon-staging.yml'
+  pull_request:
+    paths:
+      - 'neon-final-class/**'
+      - '.github/workflows/hed3505-neon-staging.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: neon-final-class
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --package-lock-only
+      - run: npm ci
+      - run: npm run build
+      - name: Static preview HTTP smoke test
+        run: |
+          npm run preview -- --port 4173 > /tmp/hed3505-preview.log 2>&1 &
+          curl --fail --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:4173/ | grep -q 'HED3505 Final Class'
+          test -n "$(find dist/assets -name '*.js' -print -quit)"
+          if grep -R -E 'postgres(ql)?://|DATABASE_URL=' dist; then
+            echo "Sensitive database connection material detected in public build"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-neon-staging-build
+          path: neon-final-class/dist
+          retention-days: 7

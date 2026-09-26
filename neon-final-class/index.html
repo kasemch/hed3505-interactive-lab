@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#faf9f6"><title>HED3505 Final Class — Neon Staging</title></head>
+<body>
+<header class="hero"><div class="wrap"><p class="eyebrow">HED3505 · CONTROLLED STAGING</p><h1>Final Class Teaching Studio</h1><p>การประเมินโปรแกรมสุขภาพในโรงเรียน · โรงเรียนอรุณพัฒนา</p><span class="pill">ทดลองระบบ · ไม่ใช้ข้อมูลนักศึกษาจริง</span></div></header>
+<main class="wrap">
+<section class="panel" id="authPanel"><h2>เข้าสู่ระบบทดลอง</h2><p>ใช้บัญชีทดสอบเท่านั้น การลงทะเบียนไม่ได้ยืนยันสถานะนักศึกษาหรือสิทธิ์ผู้สอนโดยอัตโนมัติ</p><form id="otpForm"><label for="email">อีเมลบัญชีทดสอบ</label><input id="email" type="email" autocomplete="email" required placeholder="name@example.com"><button type="submit">ส่งรหัส OTP</button></form><form id="verifyForm" hidden><label for="otp">รหัสจากอีเมล</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" required><button type="submit">ยืนยันรหัส</button></form><button id="googleBtn" class="secondary">เข้าสู่ระบบด้วย Google</button><p id="authMessage" role="status" aria-live="polite"></p></section>
+<section id="workspace" hidden>
+<div class="panel account"><div><p class="eyebrow">บัญชีที่เข้าสู่ระบบ</p><strong id="accountEmail"></strong><p id="accountSubject" class="small"></p></div><button id="signOut" class="secondary">ออกจากระบบ</button></div>
+<section class="panel"><h2>กิจกรรม</h2><p id="sessionMessage">กำลังตรวจสอบกิจกรรมที่เปิดอยู่</p><div id="sessions"></div></section>
+<section class="panel" id="studentPanel" hidden><h2>เข้าร่วมกิจกรรมทดลอง</h2><form id="joinForm"><label for="sessionCode">รหัสกิจกรรม</label><input id="sessionCode" required maxlength="40"><label for="studentId">รหัสทดสอบ 6–15 หลัก (ห้ามใช้รหัสนักศึกษาจริง)</label><input id="studentId" required pattern="[0-9]{6,15}" inputmode="numeric"><label for="displayName">ชื่อแสดงผลทดสอบ</label><input id="displayName" required minlength="2" maxlength="150"><button type="submit">เข้าร่วม</button></form><p id="joinMessage" role="status"></p><div id="myWork"></div></section>
+<section class="panel" id="teacherPanel" hidden><h2>Instructor Dashboard</h2><p>เฉพาะบัญชีที่ได้รับสิทธิ์จากฐานข้อมูล</p><div id="teacherData"></div></section>
+</section>
+<p class="footer">STAGING ONLY · ไม่มีการให้คะแนนอัตโนมัติ · ข้อมูลจำลองเท่านั้น</p>
+</main><script type="module" src="/src/main.js"></script></body></html>
