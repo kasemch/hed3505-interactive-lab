@@ -22,7 +22,7 @@ const stages = [
   ['REFLECTION','Reflection'],
   ['POSTTEST','Posttest']
 ];
-const firstRound = new Set(stages.slice(0,5).map(([v])=>v));
+const firstRound = new Set(['PRETEST','INITIAL_JUDGMENT','EVIDENCE_REGISTER']);
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function note(id,message,error=false){$(id).textContent=message;$(id).className=error?'danger':'ok';}
 function fail(e){return e?.message || 'ไม่สามารถทำรายการได้ โปรดลองใหม่';}
@@ -64,6 +64,7 @@ async function loadMine(){
     '<form id="answerForm"><label for="stage">ขั้นกิจกรรม</label><select id="stage" required></select><label for="answer">คำตอบ (ข้อมูลจำลองเท่านั้น)</label><textarea id="answer" required rows="6" maxlength="10000"></textarea><button type="submit">บันทึกฉบับใหม่</button></form><p id="answerMessage" role="status"></p>';
   const choices=stages.filter(([v])=>open==='ROUND2_OPEN'? !firstRound.has(v) : (open==='ROUND1_OPEN'&&firstRound.has(v)));
   $('stage').innerHTML=choices.map(([v,t])=>'<option value="'+v+'">'+safe(t)+'</option>').join('');
+  $('answerForm').hidden=choices.length===0;
   $('refreshEvidence').onclick=()=>loadMine().catch(err=>note('answerMessage',fail(err),true));
   $('answerForm').onsubmit=async(e)=>{
     e.preventDefault();const stage=$('stage').value,answer=$('answer').value.trim();
