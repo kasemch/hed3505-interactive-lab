@@ -25,6 +25,26 @@ jobs:
           node-version: '22'
       - run: npm install --package-lock-only
       - run: npm ci
+      - name: SDK client contract smoke test
+        run: |
+          node --input-type=module <<'NODE'
+          import { createClient } from '@neondatabase/neon-js';
+          const client = createClient({
+            auth: { url: 'https://example.invalid/auth' },
+            dataApi: { url: 'https://example.invalid/rest/v1' }
+          });
+          if (typeof client.schema !== 'function') throw new Error('Missing client.schema()');
+          const scoped = client.schema('hed3505_final_class');
+          if (typeof scoped.from !== 'function' || typeof scoped.rpc !== 'function') {
+            throw new Error('Schema-scoped Data API methods missing');
+          }
+          if (typeof client.auth.getSession !== 'function' ||
+              typeof client.auth.emailOtp.sendVerificationOtp !== 'function' ||
+              typeof client.auth.signIn.emailOtp !== 'function') {
+            throw new Error('Auth SDK methods missing');
+          }
+          console.log('SDK contract OK');
+          NODE
       - run: npm run build
       - name: Static preview HTTP smoke test
         run: |
