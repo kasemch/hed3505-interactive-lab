@@ -62,11 +62,14 @@ async function loadMine(){
   activeSession=sessionRows[0]||null;
   if(!activeSession){$('myWork').textContent='ไม่พบกิจกรรม';return;}
   const docs=await checked(db.from('case_documents').select('round_no,title,content,version').eq('session_id',activeSession.id).order('round_no'));
-  const answers=await checked(db.from('responses').select('stage,revision_no,submitted_at').eq('participant_id',activeParticipant.id).order('submitted_at',{ascending:false}));
+  const answers=await checked(db.from('responses').select('id,stage,revision_no,submitted_at').eq('participant_id',activeParticipant.id).order('submitted_at',{ascending:false}));
+  const grades=answers.length?await checked(db.from('assessments').select('response_id,total_score,feedback,assessed_at').in('response_id',answers.map(a=>a.id)).order('assessed_at',{ascending:false})):[];
+  const gradeByResponse=new Map();
+  for(const grade of grades)if(!gradeByResponse.has(grade.response_id))gradeByResponse.set(grade.response_id,grade);
   const open=activeSession.phase;
   $('myWork').innerHTML='<h3>'+safe(activeSession.title)+'</h3><p>สถานะ: '+safe(open)+'</p>'+
     '<h4>เอกสารที่เปิดแล้ว</h4>'+docs.map(d=>'<details class="item"><summary>'+safe(d.title)+' · รอบ '+d.round_no+'</summary><pre>'+safe(JSON.stringify(d.content,null,2))+'</pre></details>').join('')+
-    '<h4>คำตอบของฉัน</h4>'+answers.map(a=>'<div class="item">'+safe(a.stage)+' · ฉบับ '+a.revision_no+'</div>').join('')+
+    '<h4>คำตอบของฉัน</h4>'+answers.map(a=>{const grade=gradeByResponse.get(a.id);return '<div class="item">'+safe(a.stage)+' · ฉบับ '+a.revision_no+(grade?' · คะแนน '+safe(grade.total_score)+'/10 · ข้อเสนอแนะ: '+safe(grade.feedback||'ไม่มีข้อความ'):' · รอประเมิน')+'</div>';}).join('')+
     '<button id="refreshEvidence" class="secondary" type="button">ตรวจสอบหลักฐานใหม่</button>'+
     '<form id="answerForm"><label for="stage">ขั้นกิจกรรม</label><select id="stage" required></select><label for="answer">คำตอบ (ข้อมูลจำลองเท่านั้น)</label><textarea id="answer" required rows="6" maxlength="10000"></textarea><button type="submit">บันทึกฉบับใหม่</button></form><p id="answerMessage" role="status"></p>';
   const choices=stages.filter(([v])=>open==='ROUND2_OPEN'? !firstRound.has(v) : (open==='ROUND1_OPEN'&&firstRound.has(v)));
