@@ -3,7 +3,7 @@
 **Scope:** Neon project `soft-lab-14586372`, branch `hed3505-final-class-staging`, database `neondb`, schema `hed3505_final_class`. This document is a test record, not a production release authorization.
 
 ## Completed backend controls
-- 8 RLS-enabled tables; no anonymous table grants. Instructor access is checked by server-side authenticated subject, never a client email string.
+- 8 RLS-enabled tables and 11 policies; no anonymous table grants. Instructor access is checked by server-side authenticated subject, never a client email string.
 - A participant can read only their own participant/response rows. Case documents require session membership and publication. Round 2 additionally requires the session to have been opened by an instructor and the requesting participant to have a stored Initial Judgment.
 - Initial Judgment is writable only in ROUND1_OPEN. Revised Judgment requires ROUND2_OPEN and a stored Initial Judgment.
 - The `open_round2` RPC requires an instructor, at least one participant, and an Initial Judgment from every enrolled participant; it locks the session row before transition.
@@ -13,6 +13,9 @@
 ## Executed SQL checks (staging)
 - Seven synthetic participants and two synthetic documents were created in a rollback-only transaction. Without a valid JWT, the authenticated role saw zero participant rows and zero case documents. Rollback left zero sessions and zero participants.
 - Rubric 2+2+1+2+2=9 accepted; incorrect total 10 rejected; criterion value 3 rejected.
+- Capacity test accepted seven synthetic participants and rejected an eighth; the transaction was rolled back.
+- An unauthenticated attempt to call the Round 2 transition was rejected; session remained ROUND1_OPEN.
+- Isolated GitHub Actions build and static-preview HTTP smoke passed. This does not verify interactive browser auth or API calls.
 - No actual students, submissions, or instructor allowlist entries have been imported.
 
 ## Remaining acceptance gates — do not mark passed without evidence
