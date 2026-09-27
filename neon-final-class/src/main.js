@@ -41,6 +41,7 @@ async function refresh(){
   if(error)throw error;
   signedIn=data?.user || data?.session?.user || null;
   if(!signedIn){$('authPanel').hidden=false;return;}
+  if(signedIn.emailVerified!==true){$('authPanel').hidden=false;note('authMessage','บัญชีนี้ยังไม่ยืนยันอีเมล กรุณายืนยันด้วยรหัสที่ส่งไปยังอีเมลทดลอง',true);return;}
   $('authPanel').hidden=true;$('workspace').hidden=false;
   $('accountEmail').textContent=signedIn.email || 'บัญชีทดสอบ';
   $('accountSubject').textContent='Auth subject: '+signedIn.id;
@@ -163,6 +164,30 @@ async function loadTeacher(){
     };
   }
 }
+$('signupForm').onsubmit=async(e)=>{
+  e.preventDefault();
+  const email=$('signupEmail').value.trim();
+  const password=$('signupPassword').value;
+  try{
+    const {data,error}=await client.auth.signUp.email({email,password,name:'HED3505 Synthetic Tester'});
+    if(error)throw error;
+    $('signupPassword').value='';
+    if(data?.user?.emailVerified===true){note('authMessage','สร้างบัญชีแล้วและอีเมลได้รับการยืนยัน');await refresh();return;}
+    $('signupVerifyForm').hidden=false;
+    note('authMessage','ตรวจสอบรหัสยืนยันในอีเมลทดสอบและกรอกด้านล่าง');
+  }catch(err){$('signupPassword').value='';note('authMessage',fail(err),true);}
+};
+$('signupVerifyForm').onsubmit=async(e)=>{
+  e.preventDefault();
+  try{
+    const {error}=await client.auth.emailOtp.verifyEmail({email:$('signupEmail').value.trim(),otp:$('signupOtp').value.trim()});
+    if(error)throw error;
+    $('signupOtp').value='';
+    $('signupVerifyForm').hidden=true;
+    note('authMessage','ยืนยันอีเมลแล้ว กรุณาเข้าสู่ระบบด้วย OTP หากยังไม่มีเซสชัน');
+    await refresh();
+  }catch(err){note('authMessage',fail(err),true);}
+};
 $('otpForm').onsubmit=async(e)=>{
   e.preventDefault();const email=$('email').value.trim();
   try{
