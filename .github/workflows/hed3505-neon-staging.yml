@@ -57,6 +57,18 @@ jobs:
             echo "Sensitive database connection material detected in public build"
             exit 1
           fi
+      - name: Install Chromium for responsive smoke
+        run: npx playwright install --with-deps chromium
+      - name: Browser and mobile smoke (no live credentials)
+        run: |
+          npm run preview -- --strictPort --port 4183 > /tmp/hed3505-mobile-preview.log 2>&1 &
+          curl --fail --retry 15 --retry-connrefused --retry-delay 1 http://127.0.0.1:4183/ > /dev/null
+          HED3505_PREVIEW_URL=http://127.0.0.1:4183/ npm run test:mobile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-responsive-preview-screenshots
+          path: neon-final-class/test-artifacts
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         with:
           name: hed3505-neon-staging-build
