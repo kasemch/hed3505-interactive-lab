@@ -40,7 +40,9 @@ jobs:
           }
           if (typeof client.auth.getSession !== 'function' ||
               typeof client.auth.emailOtp.sendVerificationOtp !== 'function' ||
-              typeof client.auth.signIn.emailOtp !== 'function') {
+              typeof client.auth.signIn.emailOtp !== 'function' ||
+              typeof client.auth.signUp.email !== 'function' ||
+              typeof client.auth.emailOtp.verifyEmail !== 'function') {
             throw new Error('Auth SDK methods missing');
           }
           console.log('SDK contract OK');
