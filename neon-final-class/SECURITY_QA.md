@@ -13,6 +13,7 @@
 
 ## Executed SQL checks (staging)
 - A synthetic invitation-only session was tested without a JWT: zero sessions and zero invitations were visible; the transaction was rolled back.
+- A rollback-only simulated-claims RLS test used three synthetic subjects A/B/C under the `authenticated` database role. A saw exactly one own participant, response and assessment; B saw exactly one own set; uninvited C saw zero sessions, participants, responses and assessments. The fixture was rolled back to zero. This validates policy behavior with injected claims, NOT cryptographically signed JWTs or a browser Auth session.
 - Seven synthetic participants and two synthetic documents were created in a rollback-only transaction. Without a valid JWT, the authenticated role saw zero participant rows and zero case documents. Rollback left zero sessions and zero participants.
 - Rubric 2+2+1+2+2=9 accepted; incorrect total 10 rejected; criterion value 3 rejected.
 - Capacity test accepted seven synthetic participants and rejected an eighth; the transaction was rolled back.
