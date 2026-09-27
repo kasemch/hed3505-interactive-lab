@@ -6,7 +6,7 @@
 - 9 RLS-enabled tables; no anonymous table grants. Instructor access is checked by server-side authenticated subject, never a client email string.
 - Sessions are invitation-only via the server-side session_invites roster, keyed by actual auth subject. Uninvited authenticated users cannot enumerate session codes or join. A participant can read only their own participant/response rows. Case documents require session membership and publication. Round 2 additionally requires the session to have been opened by an instructor and the requesting participant to have a stored Initial Judgment.
 - Initial Judgment is writable only in ROUND1_OPEN. Revised Judgment requires ROUND2_OPEN and a stored Initial Judgment.
-- The `open_round2` RPC requires an instructor, at least one participant, and an Initial Judgment from every enrolled participant; it locks the session row before transition.
+- The `open_round2` RPC requires an instructor, enrollment equal to session capacity (7/7 in the approved rehearsal), and an Initial Judgment from every enrolled participant; it locks the session row before transition.
 - Participant join uses a row-locking capacity trigger. Responses and events are append-only. Feedback response reference is constrained to the same session.
 - Peer feedback with a response reference must target a response authored by the feedback recipient in the same session. A SECURITY DEFINER trigger checks this without exposing the recipient's response to the feedback author. Assessments and peer feedback are now immutable under UPDATE/DELETE triggers.
 - Assessment insert requires instructor subject; five 0–2 rubric criteria must sum to the 0–10 total. Instructor UI can review individual Revised Judgment/Decision Brief and append rubric assessment; learner UI reads only its own score/feedback through RLS.
@@ -23,7 +23,7 @@
 - No actual students, submissions, or instructor allowlist entries have been imported.
 
 ## Remaining acceptance gates — do not mark passed without evidence
-1. Auth provider config: email verification is currently disabled for email/password sign-up. Verify and harden before real use; check email OTP delivery, session and Google callback.
+1. Auth provider config: Console screenshot shows Verify at Sign-up ON with Verification code, while API reports `require_email_verification=true` and `verify_email_on_sign_up=false`. Actual signup, OTP delivery, unverified-account rejection, session and Google callback are untested. Do not treat UI-only `emailVerified` check as a substitute for server enforcement.
 2. Browser smoke and two distinct signed test identities. Verify A cannot read or write B's records; instructor role works only after explicit administrative allowlist. An unauthenticated SQL role test is not a substitute for two-user JWT testing.
 3. Invite seven verified test subjects using a privileged path; end-to-end seven-participant rehearsal with real test JWTs, locked Initial Judgment, instructor Round 2 transition, and controlled evidence reveal.
 4. Match case narrative and instructor answer key to approved v5.1 source; never insert a guessed case or publish the instructor key to student-facing records.
