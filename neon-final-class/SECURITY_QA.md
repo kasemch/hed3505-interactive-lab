@@ -8,6 +8,7 @@
 - Initial Judgment is writable only in ROUND1_OPEN. Revised Judgment requires ROUND2_OPEN and a stored Initial Judgment.
 - The `open_round2` RPC requires an instructor, at least one participant, and an Initial Judgment from every enrolled participant; it locks the session row before transition.
 - Participant join uses a row-locking capacity trigger. Responses and events are append-only. Feedback response reference is constrained to the same session.
+- Peer feedback with a response reference must target a response authored by the feedback recipient in the same session. A SECURITY DEFINER trigger checks this without exposing the recipient's response to the feedback author. Assessments and peer feedback are now immutable under UPDATE/DELETE triggers.
 - Assessment insert requires instructor subject; five 0–2 rubric criteria must sum to the 0–10 total. Instructor UI can review individual Revised Judgment/Decision Brief and append rubric assessment; learner UI reads only its own score/feedback through RLS.
 
 ## Executed SQL checks (staging)
@@ -17,6 +18,7 @@
 - Capacity test accepted seven synthetic participants and rejected an eighth; the transaction was rolled back.
 - An unauthenticated attempt to call the Round 2 transition was rejected; session remained ROUND1_OPEN.
 - Isolated GitHub Actions build and static-preview HTTP smoke passed. This does not verify interactive browser auth or API calls.
+- A rollback-only feedback test rejected a response belonging to a different recipient, accepted the matching recipient, and left zero records after rollback. Migration recorded in `migrations/002_feedback_integrity.sql`.
 - A rollback-only grading test verified that an authenticated role without a valid instructor JWT could not insert a grade, while the privileged fixture accepted a valid 9/10 rubric record; all synthetic rows were rolled back.
 - No actual students, submissions, or instructor allowlist entries have been imported.
 
