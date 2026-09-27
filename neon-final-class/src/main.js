@@ -218,7 +218,7 @@ $('joinForm').onsubmit=async(e)=>{
     const rows=await checked(db.from('class_sessions').select('id,phase').eq('session_code',code));
     if(!rows.length)throw new Error('ไม่พบกิจกรรมที่เปิดอยู่');
     const s=rows[0];
-    if(!['ROUND1_OPEN','ROUND2_OPEN'].includes(s.phase))throw new Error('กิจกรรมยังไม่เปิด');
+    if(s.phase!=='ROUND1_OPEN')throw new Error('รับผู้เข้าร่วมเฉพาะรอบที่ 1 ก่อนเปิดหลักฐานใหม่');
     await checked(db.from('participants').insert({
       session_id:s.id,auth_subject:signedIn.id,student_id:$('studentId').value.trim(),
       display_name:$('displayName').value.trim(),identity_verified:false
