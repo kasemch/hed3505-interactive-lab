@@ -141,6 +141,30 @@ jobs:
           assert (candidate / 'final-class/index.html').is_file()
           print('PUBLICATION CANDIDATE PASS: lecturer key excluded; all other QA files byte-for-byte preserved. Candidate is NOT uploaded or deployed.')
           PY
+      - name: Verify controlled preview candidate content boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s _publication_candidate/index.html
+          test -s _publication_candidate/final-class/index.html
+          test ! -e _publication_candidate/evaluation-analysis-lab/LECTURER-ANSWER-KEY.md
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root = Path('_publication_candidate')
+          forbidden_names = ('answer-key', 'instructor-only', 'lecturer-only', 'private-key')
+          matches = [str(p.relative_to(root)) for p in root.rglob('*') if p.is_file() and any(x in p.name.lower() for x in forbidden_names)]
+          assert not matches, f'Restricted filename candidate(s): {matches}'
+          for p in root.rglob('*'):
+              if p.is_symlink(): raise AssertionError(f'Symlink in preview: {p.relative_to(root)}')
+          print('CONTROLLED PREVIEW CANDIDATE PASS: excluded key absent; no restricted filename candidates or symlinks')
+          PY
+      - name: Upload controlled preview candidate (artifact only; NOT Pages deployment)
+        uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-controlled-preview-candidate
+          path: _publication_candidate/
+          retention-days: 7
       - name: Upload mobile QA screenshots (NOT deployment)
         if: always()
         uses: actions/upload-artifact@v4
