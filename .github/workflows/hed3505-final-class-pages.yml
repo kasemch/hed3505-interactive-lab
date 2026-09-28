@@ -26,6 +26,7 @@ jobs:
       - name: Install and build isolated application
         working-directory: neon-final-class
         run: |
+          npm install --package-lock-only --ignore-scripts
           npm ci
           npm run build
       - name: Verify static output and reject sensitive material
