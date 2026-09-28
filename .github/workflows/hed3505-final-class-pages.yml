@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           test -s neon-final-class/dist/index.html
           test -n "$(find neon-final-class/dist/assets -name '*.js' -print -quit)"
-          grep -Eq '(src|href)="\\./assets/' neon-final-class/dist/index.html
+          grep -Eq 'assets/index-[[:alnum:]_-]+\\.(js|css)' neon-final-class/dist/index.html
           if grep -Eq '(src|href)="/assets/' neon-final-class/dist/index.html; then
             echo 'Root-absolute asset path would break nested GitHub Pages route'; exit 1
           fi
