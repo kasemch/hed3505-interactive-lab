@@ -97,6 +97,26 @@ jobs:
           PY
           test ! -e _site/.git
           echo 'Combined artifact is for QA only; publication is prohibited.'
+      - name: Audit restricted content boundary (QA only; no publication)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          site = Path('_site')
+          docs = Path('docs')
+          restricted = Path('evaluation-analysis-lab/LECTURER-ANSWER-KEY.md')
+          assert (docs / restricted).is_file(), 'Expected lecturer key not found; review classification'
+          assert (site / restricted).is_file(), 'Preservation artifact must retain original source'
+          assert hashlib.sha256((docs / restricted).read_bytes()).digest() == hashlib.sha256((site / restricted).read_bytes()).digest(), 'Original answer key unexpectedly changed'
+          candidates = [p for p in site.rglob('*') if p.is_file() and any(term in p.name.lower() for term in ('answer-key', 'instructor-only', 'lecturer-only', 'private-key'))]
+          print('RESTRICTED CONTENT AUDIT: ' + str(len(candidates)) + ' filename candidates in QA-only artifact')
+          for item in candidates:
+              print('RESTRICTED PATH: ' + str(item.relative_to(site)))
+          assert candidates, 'Classification review expected at least one restricted candidate'
+          print('PUBLICATION GATE HOLD: combined QA artifact includes restricted candidate(s); it must not be deployed.')
+          PY
       - name: Upload mobile QA screenshots (NOT deployment)
         if: always()
         uses: actions/upload-artifact@v4
