@@ -22,3 +22,12 @@ Status: HOLD. Audit-only record; not a release authorization.
 
 ## Release decision
 CI: UNVERIFIED; Artifact: UNVERIFIED; signed JWT: PENDING; 7-person rehearsal: PENDING; mobile: PENDING; privacy/source match: PENDING. No merge, no deploy, no production writes, no real student data. Human release authorization required after all evidence is attached.
+
+## CI and artifact verification update (2026-09-28)
+- Commit 99e9dc9984bb605dd8ac9c2233848958a84499cc: GitHub Actions runs 36374833905 (Validate Static Learning Lab), 36374833919 (Neon Staging Build), 36374833907 (Final Class Pages Preservation QA), all completed/success.
+- Preservation job 108778463667: build, static/sensitive scan, preservation assembly, mobile screenshot upload, and combined QA artifact upload all completed/success.
+- Downloaded and inspected artifact 10950945503: four PNG files desktop.png, iphone-small.png, iphone-large.png, tablet.png; no unsafe ZIP paths. This proves automated viewport screenshots, NOT real-device acceptance.
+- Downloaded and inspected artifact 10950736815: 29 entries including existing Learning Hub root content and isolated final-class/index.html plus assets. No unsafe ZIP paths. Workflow's exact docs-preservation step passed; independent repository-to-artifact bytewise comparison remains to be performed.
+- Both artifacts expire 2026-10-05. Their availability is temporary.
+- IMPORTANT: combined artifact includes pre-existing evaluation-analysis-lab/LECTURER-ANSWER-KEY.md under the Learning Hub root. This is a preservation/privacy review finding; do not assume that existing public content is instructor-private. Do not deploy the combined artifact until its public/private content boundary has been reviewed.
+- Signed two-account JWT authorization, 7-person synthetic end-to-end, actual physical-device testing, and release authorization remain PENDING. Release HOLD remains in force.
