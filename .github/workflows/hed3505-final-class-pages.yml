@@ -38,18 +38,40 @@ jobs:
           if grep -R -E 'postgres(ql)?://|DATABASE_URL=|NEON_API_KEY=|PRIVATE_KEY|SERVICE_ROLE_KEY' neon-final-class/dist; then
             echo 'Sensitive material detected in public build'; exit 1
           fi
-      - name: Preservation gate — require authoritative Learning Hub artifact
+      - name: Assemble combined artifact and verify exact Learning Hub preservation
         shell: bash
         run: |
           set -euo pipefail
-          echo 'Final-Class build is isolated. Existing Pages site must not be replaced.'
-          echo 'A complete, verified Learning Hub artifact is required before any combined Pages release.'
+          test -s docs/index.html
+          test -s docs/app.js
+          test -s docs/styles.css
+          test -s neon-final-class/dist/index.html
           test ! -e _site
-          test ! -e neon-final-class/dist/final-class
-          echo 'PRESERVATION: HOLD (no combined artifact assembled or deployed)'
-      - name: Upload isolated QA artifact only
+          mkdir -p _site/final-class
+          cp -a docs/. _site/
+          cp -a neon-final-class/dist/. _site/final-class/
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, sys
+          source = Path('docs')
+          output = Path('_site')
+          original = {p.relative_to(source): p for p in source.rglob('*') if p.is_file()}
+          assert original, 'No authoritative Learning Hub source files'
+          for relative, old in original.items():
+              assert not old.is_symlink(), f'Symlink in source: {relative}'
+              new = output / relative
+              assert new.is_file(), f'Missing original file: {relative}'
+              assert hashlib.sha256(old.read_bytes()).digest() == hashlib.sha256(new.read_bytes()).digest(), f'Changed original file: {relative}'
+          assert (output / 'final-class/index.html').is_file()
+          assert (output / 'final-class/assets').is_dir()
+          assert not (source / 'final-class').exists(), 'Final-Class path collides with original site'
+          print(f'PRESERVATION PASS: {len(original)} original files retained byte-for-byte; Final-Class isolated.')
+          PY
+          test ! -e _site/.git
+          echo 'Combined artifact is for QA only; publication is prohibited.'
+      - name: Upload combined QA artifact only (NOT GitHub Pages)
         uses: actions/upload-artifact@v4
         with:
-          name: hed3505-final-class-build-only
-          path: neon-final-class/dist
+          name: hed3505-combined-preservation-qa
+          path: _site/
           retention-days: 7
