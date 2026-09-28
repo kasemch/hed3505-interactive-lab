@@ -117,6 +117,30 @@ jobs:
           assert candidates, 'Classification review expected at least one restricted candidate'
           print('PUBLICATION GATE HOLD: combined QA artifact includes restricted candidate(s); it must not be deployed.')
           PY
+      - name: Validate excluded-key publication candidate (no upload or deploy)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, shutil
+          source = Path('_site')
+          candidate = Path('_publication_candidate')
+          restricted = Path('evaluation-analysis-lab/LECTURER-ANSWER-KEY.md')
+          assert not candidate.exists(), 'Candidate path must not preexist'
+          shutil.copytree(source, candidate)
+          (candidate / restricted).unlink()
+          assert not (candidate / restricted).exists(), 'Lecturer key leaked into candidate'
+          for old in source.rglob('*'):
+              if not old.is_file() or old.relative_to(source) == restricted:
+                  continue
+              new = candidate / old.relative_to(source)
+              assert new.is_file(), f'Missing preserved file: {old.relative_to(source)}'
+              assert hashlib.sha256(old.read_bytes()).digest() == hashlib.sha256(new.read_bytes()).digest(), f'Changed preserved file: {old.relative_to(source)}'
+          assert (candidate / 'index.html').is_file()
+          assert (candidate / 'final-class/index.html').is_file()
+          print('PUBLICATION CANDIDATE PASS: lecturer key excluded; all other QA files byte-for-byte preserved. Candidate is NOT uploaded or deployed.')
+          PY
       - name: Upload mobile QA screenshots (NOT deployment)
         if: always()
         uses: actions/upload-artifact@v4
