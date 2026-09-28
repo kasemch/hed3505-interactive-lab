@@ -29,12 +29,17 @@ jobs:
           npm install --package-lock-only --ignore-scripts
           npm ci
           npm run build
+          node --test tests/registration-state.test.js
       - name: Verify static output and reject sensitive material
         shell: bash
         run: |
           set -euo pipefail
           test -s neon-final-class/dist/index.html
           test -n "$(find neon-final-class/dist/assets -name '*.js' -print -quit)"
+          grep -Eq '(src|href)="\\./assets/' neon-final-class/dist/index.html
+          if grep -Eq '(src|href)="/assets/' neon-final-class/dist/index.html; then
+            echo 'Root-absolute asset path would break nested GitHub Pages route'; exit 1
+          fi
           if grep -R -E 'postgres(ql)?://|DATABASE_URL=|NEON_API_KEY=|PRIVATE_KEY|SERVICE_ROLE_KEY' neon-final-class/dist; then
             echo 'Sensitive material detected in public build'; exit 1
           fi
