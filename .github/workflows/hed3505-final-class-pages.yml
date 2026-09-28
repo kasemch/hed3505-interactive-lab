@@ -1,54 +1,54 @@
-name: HED3505 Final Class GitHub Pages Staging
+name: HED3505 Final Class Pages Preservation QA
 on:
   push:
     branches: [hed3505-final-class-neon-staging-01]
     paths:
       - 'neon-final-class/**'
       - '.github/workflows/hed3505-final-class-pages.yml'
+  pull_request:
+    paths:
+      - 'neon-final-class/**'
+      - '.github/workflows/hed3505-final-class-pages.yml'
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
-  group: pages
+  group: hed3505-final-class-preservation-qa
   cancel-in-progress: false
 jobs:
-  build:
+  build-and-preservation-audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install and build staging app
+      - name: Install and build isolated application
         working-directory: neon-final-class
         run: |
-          npm install --package-lock-only
           npm ci
           npm run build
-      - name: Check static output and secrets
+      - name: Verify static output and reject sensitive material
+        shell: bash
         run: |
-          test -f neon-final-class/dist/index.html
+          set -euo pipefail
+          test -s neon-final-class/dist/index.html
           test -n "$(find neon-final-class/dist/assets -name '*.js' -print -quit)"
-          if grep -R -E 'postgres(ql)?://|DATABASE_URL=|NEON_API_KEY=' neon-final-class/dist; then
-            echo 'Sensitive connection material in public bundle'; exit 1
+          if grep -R -E 'postgres(ql)?://|DATABASE_URL=|NEON_API_KEY=|PRIVATE_KEY|SERVICE_ROLE_KEY' neon-final-class/dist; then
+            echo 'Sensitive material detected in public build'; exit 1
           fi
-      - name: Assemble Pages site without replacing Learning Hub
+      - name: Preservation gate — require authoritative Learning Hub artifact
+        shell: bash
         run: |
-          mkdir -p _site/final-class-staging
-          cp -R neon-final-class/dist/. _site/final-class-staging/
-          printf '%s\n' '<!doctype html><html lang="th"><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>HED3505 Staging</title><p>Controlled staging only. Do not enter real student data.</p><a href="./final-class-staging/">Open HED3505 staging</a></html>' > _site/index.html
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+          set -euo pipefail
+          echo 'Final-Class build is isolated. Existing Pages site must not be replaced.'
+          echo 'A complete, verified Learning Hub artifact is required before any combined Pages release.'
+          test ! -e _site
+          test ! -e neon-final-class/dist/final-class
+          echo 'PRESERVATION: HOLD (no combined artifact assembled or deployed)'
+      - name: Upload isolated QA artifact only
+        uses: actions/upload-artifact@v4
         with:
-          path: _site
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          name: hed3505-final-class-build-only
+          path: neon-final-class/dist
+          retention-days: 7
