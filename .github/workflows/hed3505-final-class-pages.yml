@@ -36,7 +36,25 @@ jobs:
           set -euo pipefail
           test -s neon-final-class/dist/index.html
           test -n "$(find neon-final-class/dist/assets -name '*.js' -print -quit)"
-          grep -Eq 'assets/index-[[:alnum:]_-]+\\.(js|css)' neon-final-class/dist/index.html
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class AssetParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.assets = []
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key in ('src', 'href') and value and 'assets/' in value:
+                          self.assets.append(value)
+          parser = AssetParser()
+          parser.feed(Path('neon-final-class/dist/index.html').read_text())
+          assert parser.assets, 'No built assets referenced by index.html'
+          for asset in parser.assets:
+              assert asset.startswith('./assets/'), f'Non-relative asset path: {asset}'
+              assert (Path('neon-final-class/dist') / asset).is_file(), f'Missing asset: {asset}'
+          print(f'PASS: {len(parser.assets)} relative asset references resolve locally')
+          PY
           if grep -Eq '(src|href)="/assets/' neon-final-class/dist/index.html; then
             echo 'Root-absolute asset path would break nested GitHub Pages route'; exit 1
           fi
