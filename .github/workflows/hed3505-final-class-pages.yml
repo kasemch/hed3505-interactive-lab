@@ -30,6 +30,11 @@ jobs:
           npm ci
           npm run build
           node --test tests/registration-state.test.js
+          npx playwright install --with-deps chromium
+          npm run preview -- --host 127.0.0.1 > /tmp/hed3505-preview.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi; sleep 1; done
+          curl -fsS http://127.0.0.1:4173/ >/dev/null
+          npm run test:mobile
       - name: Verify static output and reject sensitive material
         shell: bash
         run: |
@@ -92,6 +97,14 @@ jobs:
           PY
           test ! -e _site/.git
           echo 'Combined artifact is for QA only; publication is prohibited.'
+      - name: Upload mobile QA screenshots (NOT deployment)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-mobile-qa
+          path: neon-final-class/test-artifacts/*.png
+          if-no-files-found: warn
+          retention-days: 7
       - name: Upload combined QA artifact only (NOT GitHub Pages)
         uses: actions/upload-artifact@v4
         with:
