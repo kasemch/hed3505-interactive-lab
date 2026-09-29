@@ -45,15 +45,29 @@ async function refresh(){
   $('authPanel').hidden=true;$('workspace').hidden=false;
   $('accountEmail').textContent=signedIn.email || 'บัญชีทดสอบ';
   $('accountSubject').textContent='Auth subject: '+signedIn.id;
-  const [sessions,teacher] = await Promise.all([
+  $('sessionMessage').textContent='กำลังตรวจสอบการเชื่อมต่อ Neon Data API…';
+  let sessions,teacher;
+  try { [sessions,teacher] = await Promise.all([
     checked(db.from('class_sessions').select('id,session_code,title,phase,capacity').order('created_at',{ascending:false})),
     checked(db.rpc('is_instructor'))
-  ]);
+  ]); } catch(err) {
+    $('sessionMessage').textContent='ไม่สามารถโหลดกิจกรรมจาก Neon Data API: '+fail(err);
+    $('sessionMessage').className='danger';
+    $('studentPanel').hidden=true;$('teacherPanel').hidden=true;
+    return;
+  }
+  $('sessionMessage').className='';
   const isTeacher=teacher===true;
   $('sessionMessage').textContent=sessions.length?'รายการกิจกรรมที่บัญชีนี้มีสิทธิ์เห็น':'ยังไม่มีกิจกรรมเปิดให้บัญชีนี้';
   $('sessions').innerHTML=sessions.map(s=>'<div class="item"><strong>'+safe(s.title)+'</strong> · '+safe(s.session_code)+' · '+safe(s.phase)+'</div>').join('');
-  if(isTeacher){$('teacherPanel').hidden=false;await loadTeacher();}
-  else{$('studentPanel').hidden=false;await loadMine();}
+  try {
+    if(isTeacher){$('teacherPanel').hidden=false;await loadTeacher();}
+    else{$('studentPanel').hidden=false;await loadMine();}
+  } catch(err) {
+    $('sessionMessage').textContent='โหลดรายละเอียดกิจกรรมไม่สำเร็จ: '+fail(err);
+    $('sessionMessage').className='danger';
+    $('studentPanel').hidden=true;$('teacherPanel').hidden=true;
+  }
 }
 async function loadMine(){
   const rows=await checked(db.from('participants').select('id,session_id,student_id,display_name').eq('auth_subject',signedIn.id));
