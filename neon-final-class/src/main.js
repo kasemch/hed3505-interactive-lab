@@ -88,10 +88,10 @@ async function refresh(){
   // Neon RPC may serialize a scalar boolean differently across client/runtime versions.
   // Normalize only explicit true-like values; never grant instructor UI from a truthy object/string.
   const isTeacher=teacher===true || teacher==='true' || teacher===1;
-  $('sessionMessage').textContent=sessions.length?'รายการกิจกรรมที่บัญชีนี้มีสิทธิ์เห็น':'ยังไม่มีกิจกรรมเปิดให้บัญชีนี้';
+  $('sessionMessage').textContent=isTeacher ? (sessions.length?'Instructor Dashboard · กิจกรรมที่ดูแล':'Instructor Dashboard · ยังไม่มีกิจกรรม') : (sessions.length?'รายการกิจกรรมที่บัญชีนี้มีสิทธิ์เห็น':'ยังไม่มีกิจกรรมเปิดให้บัญชีนี้');
   $('sessions').innerHTML=sessions.map(s=>'<div class="item"><strong>'+safe(s.title)+'</strong> · '+safe(s.session_code)+' · '+safe(s.phase)+'</div>').join('');
   try {
-    if(isTeacher){$('teacherPanel').hidden=false;await loadTeacher();}
+    if(isTeacher){$('studentPanel').hidden=true;$('teacherPanel').hidden=false;await loadTeacher();}
     else{$('studentPanel').hidden=false;await loadMine();}
   } catch(err) {
     $('sessionMessage').textContent='โหลดรายละเอียดกิจกรรมไม่สำเร็จ: '+fail(err);
