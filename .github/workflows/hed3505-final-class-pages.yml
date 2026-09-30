@@ -1,0 +1,181 @@
+name: HED3505 Final Class Pages Preservation QA
+on:
+  push:
+    branches: [hed3505-final-class-neon-staging-01]
+    paths:
+      - 'neon-final-class/**'
+      - '.github/workflows/hed3505-final-class-pages.yml'
+  pull_request:
+    paths:
+      - 'neon-final-class/**'
+      - '.github/workflows/hed3505-final-class-pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hed3505-final-class-preservation-qa
+  cancel-in-progress: false
+jobs:
+  build-and-preservation-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and build isolated application
+        working-directory: neon-final-class
+        run: |
+          npm install --package-lock-only --ignore-scripts
+          npm ci
+          npm run build
+          node --test tests/registration-state.test.js
+          npx playwright install --with-deps chromium
+          npm run preview -- --host 127.0.0.1 > /tmp/hed3505-preview.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi; sleep 1; done
+          curl -fsS http://127.0.0.1:4173/ >/dev/null
+          npm run test:mobile
+      - name: Verify static output and reject sensitive material
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s neon-final-class/dist/index.html
+          test -n "$(find neon-final-class/dist/assets -name '*.js' -print -quit)"
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class AssetParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.assets = []
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key in ('src', 'href') and value and 'assets/' in value:
+                          self.assets.append(value)
+          parser = AssetParser()
+          parser.feed(Path('neon-final-class/dist/index.html').read_text())
+          assert parser.assets, 'No built assets referenced by index.html'
+          for asset in parser.assets:
+              assert asset.startswith('./assets/'), f'Non-relative asset path: {asset}'
+              assert (Path('neon-final-class/dist') / asset).is_file(), f'Missing asset: {asset}'
+          print(f'PASS: {len(parser.assets)} relative asset references resolve locally')
+          PY
+          if grep -Eq '(src|href)="/assets/' neon-final-class/dist/index.html; then
+            echo 'Root-absolute asset path would break nested GitHub Pages route'; exit 1
+          fi
+          if grep -R -E 'postgres(ql)?://|DATABASE_URL=|NEON_API_KEY=|PRIVATE_KEY|SERVICE_ROLE_KEY' neon-final-class/dist; then
+            echo 'Sensitive material detected in public build'; exit 1
+          fi
+      - name: Assemble combined artifact and verify exact Learning Hub preservation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/index.html
+          test -s docs/app.js
+          test -s docs/styles.css
+          test -s neon-final-class/dist/index.html
+          test ! -e _site
+          mkdir -p _site/final-class
+          cp -a docs/. _site/
+          cp -a neon-final-class/dist/. _site/final-class/
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, sys
+          source = Path('docs')
+          output = Path('_site')
+          original = {p.relative_to(source): p for p in source.rglob('*') if p.is_file()}
+          assert original, 'No authoritative Learning Hub source files'
+          for relative, old in original.items():
+              assert not old.is_symlink(), f'Symlink in source: {relative}'
+              new = output / relative
+              assert new.is_file(), f'Missing original file: {relative}'
+              assert hashlib.sha256(old.read_bytes()).digest() == hashlib.sha256(new.read_bytes()).digest(), f'Changed original file: {relative}'
+          assert (output / 'final-class/index.html').is_file()
+          assert (output / 'final-class/assets').is_dir()
+          assert not (source / 'final-class').exists(), 'Final-Class path collides with original site'
+          print(f'PRESERVATION PASS: {len(original)} original files retained byte-for-byte; Final-Class isolated.')
+          PY
+          test ! -e _site/.git
+          echo 'Combined artifact is for QA only; publication is prohibited.'
+      - name: Audit restricted content boundary (QA only; no publication)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          site = Path('_site')
+          docs = Path('docs')
+          restricted = Path('evaluation-analysis-lab/LECTURER-ANSWER-KEY.md')
+          assert (docs / restricted).is_file(), 'Expected lecturer key not found; review classification'
+          assert (site / restricted).is_file(), 'Preservation artifact must retain original source'
+          assert hashlib.sha256((docs / restricted).read_bytes()).digest() == hashlib.sha256((site / restricted).read_bytes()).digest(), 'Original answer key unexpectedly changed'
+          candidates = [p for p in site.rglob('*') if p.is_file() and any(term in p.name.lower() for term in ('answer-key', 'instructor-only', 'lecturer-only', 'private-key'))]
+          print('RESTRICTED CONTENT AUDIT: ' + str(len(candidates)) + ' filename candidates in QA-only artifact')
+          for item in candidates:
+              print('RESTRICTED PATH: ' + str(item.relative_to(site)))
+          assert candidates, 'Classification review expected at least one restricted candidate'
+          print('PUBLICATION GATE HOLD: combined QA artifact includes restricted candidate(s); it must not be deployed.')
+          PY
+      - name: Validate excluded-key publication candidate (no upload or deploy)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, shutil
+          source = Path('_site')
+          candidate = Path('_publication_candidate')
+          restricted = Path('evaluation-analysis-lab/LECTURER-ANSWER-KEY.md')
+          assert not candidate.exists(), 'Candidate path must not preexist'
+          shutil.copytree(source, candidate)
+          (candidate / restricted).unlink()
+          assert not (candidate / restricted).exists(), 'Lecturer key leaked into candidate'
+          for old in source.rglob('*'):
+              if not old.is_file() or old.relative_to(source) == restricted:
+                  continue
+              new = candidate / old.relative_to(source)
+              assert new.is_file(), f'Missing preserved file: {old.relative_to(source)}'
+              assert hashlib.sha256(old.read_bytes()).digest() == hashlib.sha256(new.read_bytes()).digest(), f'Changed preserved file: {old.relative_to(source)}'
+          assert (candidate / 'index.html').is_file()
+          assert (candidate / 'final-class/index.html').is_file()
+          print('PUBLICATION CANDIDATE PASS: lecturer key excluded; all other QA files byte-for-byte preserved. Candidate is NOT uploaded or deployed.')
+          PY
+      - name: Verify controlled preview candidate content boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s _publication_candidate/index.html
+          test -s _publication_candidate/final-class/index.html
+          test ! -e _publication_candidate/evaluation-analysis-lab/LECTURER-ANSWER-KEY.md
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root = Path('_publication_candidate')
+          forbidden_names = ('answer-key', 'instructor-only', 'lecturer-only', 'private-key')
+          matches = [str(p.relative_to(root)) for p in root.rglob('*') if p.is_file() and any(x in p.name.lower() for x in forbidden_names)]
+          assert not matches, f'Restricted filename candidate(s): {matches}'
+          for p in root.rglob('*'):
+              if p.is_symlink(): raise AssertionError(f'Symlink in preview: {p.relative_to(root)}')
+          print('CONTROLLED PREVIEW CANDIDATE PASS: excluded key absent; no restricted filename candidates or symlinks')
+          PY
+      - name: Upload controlled preview candidate (artifact only; NOT Pages deployment)
+        uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-controlled-preview-candidate
+          path: _publication_candidate/
+          retention-days: 7
+      - name: Upload mobile QA screenshots (NOT deployment)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-mobile-qa
+          path: neon-final-class/test-artifacts/*.png
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Upload combined QA artifact only (NOT GitHub Pages)
+        uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-combined-preservation-qa
+          path: _site/
+          retention-days: 7

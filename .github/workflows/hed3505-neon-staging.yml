@@ -1,0 +1,76 @@
+name: HED3505 Neon Staging Build
+on:
+  push:
+    branches: [hed3505-final-class-neon-staging-01]
+    paths:
+      - 'neon-final-class/**'
+      - '.github/workflows/hed3505-neon-staging.yml'
+  pull_request:
+    paths:
+      - 'neon-final-class/**'
+      - '.github/workflows/hed3505-neon-staging.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: neon-final-class
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --package-lock-only
+      - run: npm ci
+      - name: SDK client contract smoke test
+        run: |
+          node --input-type=module <<'NODE'
+          import { createClient } from '@neondatabase/neon-js';
+          const client = createClient({
+            auth: { url: 'https://example.invalid/auth' },
+            dataApi: { url: 'https://example.invalid/rest/v1' }
+          });
+          if (typeof client.schema !== 'function') throw new Error('Missing client.schema()');
+          const scoped = client.schema('hed3505_final_class');
+          if (typeof scoped.from !== 'function' || typeof scoped.rpc !== 'function') {
+            throw new Error('Schema-scoped Data API methods missing');
+          }
+          if (typeof client.auth.getSession !== 'function' ||
+              typeof client.auth.emailOtp.sendVerificationOtp !== 'function' ||
+              typeof client.auth.signIn.emailOtp !== 'function' ||
+              typeof client.auth.signUp.email !== 'function' ||
+              typeof client.auth.emailOtp.verifyEmail !== 'function') {
+            throw new Error('Auth SDK methods missing');
+          }
+          console.log('SDK contract OK');
+          NODE
+      - run: npm run build
+      - name: Static preview HTTP smoke test
+        run: |
+          npm run preview -- --port 4173 > /tmp/hed3505-preview.log 2>&1 &
+          curl --fail --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:4173/ | grep -q 'HED3505 Final Class'
+          test -n "$(find dist/assets -name '*.js' -print -quit)"
+          if grep -R -E 'postgres(ql)?://|DATABASE_URL=' dist; then
+            echo "Sensitive database connection material detected in public build"
+            exit 1
+          fi
+      - name: Install Chromium for responsive smoke
+        run: npx playwright install --with-deps chromium
+      - name: Browser and mobile smoke (no live credentials)
+        run: |
+          npm run preview -- --strictPort --port 4183 > /tmp/hed3505-mobile-preview.log 2>&1 &
+          curl --fail --retry 15 --retry-connrefused --retry-delay 1 http://127.0.0.1:4183/ > /dev/null
+          HED3505_PREVIEW_URL=http://127.0.0.1:4183/ npm run test:mobile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-responsive-preview-screenshots
+          path: neon-final-class/test-artifacts
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-neon-staging-build
+          path: neon-final-class/dist
+          retention-days: 7
