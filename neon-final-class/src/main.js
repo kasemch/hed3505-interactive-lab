@@ -51,28 +51,7 @@ async function refresh(){
   // Internal auth identifiers must never be rendered in the normal UI.
   $('accountSubject').textContent='';
   $('accountSubject').hidden=true;
-  // One-tap staging RLS check for iPad/mobile testing. Reads IDs only and reports aggregate PASS/REVIEW.
-  if (location.hostname === 'stunning-space-giggle-jjjq6jjgv7g9cg7j-5173.app.github.dev' && !$('teacherPanel').hidden) {
-    let b=document.getElementById('securityTestBtn');
-    if(!b){
-      b=document.createElement('button');b.id='securityTestBtn';b.type='button';b.className='secondary';b.textContent='ทดสอบความปลอดภัย RLS';
-      const out=document.createElement('p');out.id='securityTestResult';out.setAttribute('role','status');
-      $('workspace').prepend(out);$('workspace').prepend(b);
-      b.onclick=async()=>{
-        b.disabled=true;const out=$('securityTestResult');out.textContent='กำลังทดสอบ…';out.className='';
-        try{
-          const tests=[];
-          for(const [name,q] of [['sessions',db.from('class_sessions').select('id').limit(5)],['participants',db.from('participants').select('id').limit(5)],['responses',db.from('responses').select('id').limit(5)]]){
-            const {data,error}=await q;tests.push({name,rows:Array.isArray(data)?data.length:null,error:!!error});
-          }
-          const isUnjoined=tests.every(x=>!x.error&&x.rows===0);
-          out.textContent=isUnjoined?'SECURITY TEST: PASS — ไม่พบข้อมูลที่บัญชีนี้ไม่มีสิทธิ์เห็น':'SECURITY TEST: REVIEW — พบบางรายการที่ต้องตรวจสอบ';
-          out.className=isUnjoined?'ok':'danger';
-        }catch(e){out.textContent='SECURITY TEST: REVIEW — '+fail(e);out.className='danger';}
-        finally{b.disabled=false;}
-      };
-    }
-  }
+  // Runtime RLS isolation is verified with independent authenticated sessions; no heuristic self-test is exposed in the learner UI.
   $('sessionMessage').textContent='กำลังตรวจสอบการเชื่อมต่อ Neon Data API…';
   let sessions,teacher;
   try { [sessions,teacher] = await Promise.all([
