@@ -52,7 +52,7 @@ async function refresh(){
   $('accountSubject').textContent='';
   $('accountSubject').hidden=true;
   // One-tap staging RLS check for iPad/mobile testing. Reads IDs only and reports aggregate PASS/REVIEW.
-  if (location.hostname === 'stunning-space-giggle-jjjq6jjgv7g9cg7j-5173.app.github.dev') {
+  if (location.hostname === 'stunning-space-giggle-jjjq6jjgv7g9cg7j-5173.app.github.dev' && !$('teacherPanel').hidden) {
     let b=document.getElementById('securityTestBtn');
     if(!b){
       b=document.createElement('button');b.id='securityTestBtn';b.type='button';b.className='secondary';b.textContent='ทดสอบความปลอดภัย RLS';
