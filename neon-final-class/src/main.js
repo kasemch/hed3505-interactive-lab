@@ -48,7 +48,9 @@ async function refresh(){
   if(signedIn.emailVerified!==true){$('authPanel').hidden=false;note('authMessage','บัญชีนี้ยังไม่ยืนยันอีเมล กรุณายืนยันด้วยรหัสที่ส่งไปยังอีเมลทดลอง',true);return;}
   $('authPanel').hidden=true;$('workspace').hidden=false;
   $('accountEmail').textContent=signedIn.email || 'บัญชีทดสอบ';
-  $('accountSubject').textContent='Auth subject: '+signedIn.id;
+  // Internal auth identifiers must never be rendered in the normal UI.
+  $('accountSubject').textContent='';
+  $('accountSubject').hidden=true;
   // One-tap staging RLS check for iPad/mobile testing. Reads IDs only and reports aggregate PASS/REVIEW.
   if (location.hostname === 'stunning-space-giggle-jjjq6jjgv7g9cg7j-5173.app.github.dev') {
     let b=document.getElementById('securityTestBtn');
@@ -83,7 +85,9 @@ async function refresh(){
     return;
   }
   $('sessionMessage').className='';
-  const isTeacher=teacher===true;
+  // Neon RPC may serialize a scalar boolean differently across client/runtime versions.
+  // Normalize only explicit true-like values; never grant instructor UI from a truthy object/string.
+  const isTeacher=teacher===true || teacher==='true' || teacher===1;
   $('sessionMessage').textContent=sessions.length?'รายการกิจกรรมที่บัญชีนี้มีสิทธิ์เห็น':'ยังไม่มีกิจกรรมเปิดให้บัญชีนี้';
   $('sessions').innerHTML=sessions.map(s=>'<div class="item"><strong>'+safe(s.title)+'</strong> · '+safe(s.session_code)+' · '+safe(s.phase)+'</div>').join('');
   try {
