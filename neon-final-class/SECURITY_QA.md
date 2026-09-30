@@ -21,18 +21,18 @@
 - Isolated GitHub Actions build and static-preview HTTP smoke passed. This does not verify interactive browser auth or API calls.
 - A rollback-only feedback test rejected a response belonging to a different recipient, accepted the matching recipient, and left zero records after rollback. Migration recorded in `migrations/002_feedback_integrity.sql`.
 - A rollback-only grading test verified that an authenticated role without a valid instructor JWT could not insert a grade, while the privileged fixture accepted a valid 9/10 rubric record; all synthetic rows were rolled back.
-- No actual students, submissions, or instructor allowlist entries have been imported.
+- No actual student records have been imported. One explicitly authorized instructor identity is now allowlisted in isolated staging after successful Neon Auth sign-in; this does not authorize production.
 
 ## Remaining acceptance gates — do not mark passed without evidence
-1. Auth provider config: Console screenshot shows Verify at Sign-up ON with Verification code, while API reports `require_email_verification=true` and `verify_email_on_sign_up=false`. Actual signup, OTP delivery, unverified-account rejection, session and Google callback are untested. Do not treat UI-only `emailVerified` check as a substitute for server enforcement.
-2. Browser smoke and two distinct signed test identities. Verify A cannot read or write B's records; instructor role works only after explicit administrative allowlist. An unauthenticated SQL role test is not a substitute for two-user JWT testing.
+1. Auth/browser evidence is partial: successful authenticated browser sessions and an explicitly authorized instructor allowlist entry have been observed in staging. Full signup/unverified-account rejection and Google callback remain unproven; UI-only `emailVerified` is not a substitute for server enforcement.
+2. Runtime two-account isolation remains pending. Verify signed learner A cannot read or write learner B's records and vice versa. Policy inspection and simulated-claims SQL are not substitutes for two independent authenticated sessions.
 3. Invite seven verified test subjects using a privileged path; end-to-end seven-participant rehearsal with real test JWTs, locked Initial Judgment, instructor Round 2 transition, and controlled evidence reveal.
 4. Match case narrative and instructor answer key to approved v5.1 source; never insert a guessed case or publish the instructor key to student-facing records.
 5. Grading UI and learner score/feedback require real test-JWT end-to-end QA; export QA, real-device mobile acceptance and institutional privacy requirements remain.
 6. Explicit human approval for any real-student or public release. Keep this PR draft and unmerged.
 
 ## Administrative procedure
-After an instructor authenticates using a verified test account, record the actual `auth_subject` returned by Neon Auth. An authorized database administrator may then insert that subject into `hed3505_final_class.instructors`. Never grant the role by a user-entered email address or by client-side code. No account is pre-authorized.
+Instructor staging authorization has now been exercised once: the explicitly approved account authenticated first, its actual Neon Auth subject was resolved server-side, and that subject was inserted into `hed3505_final_class.instructors`. Never grant instructor role from a user-entered email or client-side assertion. Repeat this procedure for any future instructor identity.
 
 ## Deployment boundary
 The Vite application lives only under `neon-final-class/` on the isolated branch. GitHub Actions builds an artifact but does not deploy to Pages. Supabase LAB 1–5 remains unchanged.
