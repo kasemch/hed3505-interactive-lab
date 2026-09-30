@@ -7,6 +7,10 @@ const client = createClient({
   dataApi: { url: 'https://ep-gentle-term-b3w3l5hi.apirest.c-4.ap-southeast-1.aws.neon.tech/neondb/rest/v1' }
 });
 const db = client.schema('hed3505_final_class');
+// Staging-only browser test hook. Never exposes tokens/cookies; disabled outside the approved Codespaces preview host.
+if (location.hostname === 'stunning-space-giggle-jjjq6jjgv7g9cg7j-5173.app.github.dev') {
+  Object.defineProperty(window, '__HED3505_TEST_CLIENT__', { value: client, writable: false, configurable: false });
+}
 const $ = (id) => document.getElementById(id);
 let signedIn = null;
 let activeParticipant = null;
