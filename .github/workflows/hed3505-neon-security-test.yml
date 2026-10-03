@@ -13,8 +13,6 @@ jobs:
       - name: Validate required secrets
         shell: bash
         env:
-          HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
-          HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
           HED3505_STUDENT_A_EMAIL: ${{ secrets.HED3505_STUDENT_A_EMAIL }}
           HED3505_STUDENT_A_PASSWORD: ${{ secrets.HED3505_STUDENT_A_PASSWORD }}
           HED3505_STUDENT_B_EMAIL: ${{ secrets.HED3505_STUDENT_B_EMAIL }}
@@ -22,13 +20,11 @@ jobs:
           HED3505_TEACHER_EMAIL: ${{ secrets.HED3505_TEACHER_EMAIL }}
           HED3505_TEACHER_PASSWORD: ${{ secrets.HED3505_TEACHER_PASSWORD }}
         run: |
-          for n in HED3505_NEON_AUTH_URL HED3505_NEON_DATA_API_URL HED3505_STUDENT_A_EMAIL HED3505_STUDENT_A_PASSWORD HED3505_STUDENT_B_EMAIL HED3505_STUDENT_B_PASSWORD HED3505_TEACHER_EMAIL HED3505_TEACHER_PASSWORD; do
+          for n in HED3505_STUDENT_A_EMAIL HED3505_STUDENT_A_PASSWORD HED3505_STUDENT_B_EMAIL HED3505_STUDENT_B_PASSWORD HED3505_TEACHER_EMAIL HED3505_TEACHER_PASSWORD; do
             test -n "${!n}" || { echo "::error::Missing required GitHub Actions secret: $n"; exit 1; }
           done
       - name: Run synthetic Auth/RLS matrix
         env:
-          HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
-          HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
           HED3505_STAGING_ORIGIN: https://staging.kengkasem.com
           HED3505_STUDENT_A_EMAIL: ${{ secrets.HED3505_STUDENT_A_EMAIL }}
           HED3505_STUDENT_A_PASSWORD: ${{ secrets.HED3505_STUDENT_A_PASSWORD }}
