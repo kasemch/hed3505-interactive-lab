@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: HED3505 Neon Auth Bridge
- * Description: Staging-only HED3505 loader for the approved Neon JS authentication bundle.
- * Version: 0.1.0
+ * Description: Staging-only HED3505 loader for the approved Neon JS authentication and learning-evidence persistence bundle.
+ * Version: 0.2.0
  * Author: HED3505
  */
 if (!defined('ABSPATH')) { exit; }
