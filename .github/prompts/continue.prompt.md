@@ -1,0 +1,1 @@
+Continue the next approved HED3505 task from CURRENT_STATE.md. Retrieve only relevant code/content/governance files, execute reversible work, validate affected behavior, and stop at a Human Gate.
