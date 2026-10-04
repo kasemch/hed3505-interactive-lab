@@ -1,0 +1,1 @@
+Review only changed/requested HED3505 scope. Prioritize correctness, learner safety/privacy, mobile usability, accessibility, and traceability. Rank critical → major → minor.
