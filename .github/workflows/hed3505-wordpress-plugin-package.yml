@@ -1,0 +1,48 @@
+name: HED3505 WordPress Plugin Package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - hed3505-wordpress-final-learning-studio-01
+    paths:
+      - 'wordpress/final-learning-studio/sdk/**'
+      - 'wordpress/final-learning-studio/plugin/**'
+      - '.github/workflows/hed3505-wordpress-plugin-package.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install SDK dependencies
+        working-directory: wordpress/final-learning-studio/sdk
+        run: npm install --no-audit --no-fund
+      - name: Build SDK bundle
+        working-directory: wordpress/final-learning-studio/sdk
+        run: npm run build
+      - name: Assemble plugin
+        run: |
+          mkdir -p build/hed3505-neon-auth/assets
+          cp wordpress/final-learning-studio/plugin/hed3505-neon-auth/hed3505-neon-auth.php build/hed3505-neon-auth/
+          cp wordpress/final-learning-studio/plugin/hed3505-neon-auth/README.md build/hed3505-neon-auth/
+          cp wordpress/final-learning-studio/sdk/dist/hed3505-neon-auth.js build/hed3505-neon-auth/assets/
+      - name: Security and package checks
+        run: |
+          php -l build/hed3505-neon-auth/hed3505-neon-auth.php
+          test -s build/hed3505-neon-auth/assets/hed3505-neon-auth.js
+          grep -q "is_page(117)" build/hed3505-neon-auth/hed3505-neon-auth.php
+          grep -q "learner_identity" build/hed3505-neon-auth/assets/hed3505-neon-auth.js
+          ! grep -Eqi '(password[[:space:]]*[:=][[:space:]]*["'\''"][^"'\'']+|eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)' build/hed3505-neon-auth/assets/hed3505-neon-auth.js
+          cd build && zip -qr hed3505-neon-auth.zip hed3505-neon-auth
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-neon-auth-wordpress-plugin
+          path: build/hed3505-neon-auth.zip
+          if-no-files-found: error
