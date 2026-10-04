@@ -1,0 +1,1 @@
+Fix the stated HED3505 defect with the smallest static/mobile-safe change. Validate the affected interaction and do not publish or cross an existing Human Gate.
