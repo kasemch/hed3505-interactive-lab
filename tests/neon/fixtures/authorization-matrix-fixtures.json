@@ -1,0 +1,84 @@
+{
+  "fixture_version": "1.0",
+  "scope": "HED3505 Neon sandbox only",
+  "data_classification": "SYNTHETIC / NO REAL STUDENT DATA",
+  "learners": [
+    {
+      "key": "student_a",
+      "display_name": "Synthetic Student A",
+      "activity_code": "C2",
+      "expected_status": "submitted"
+    },
+    {
+      "key": "student_b",
+      "display_name": "Synthetic Student B",
+      "activity_code": "C3",
+      "expected_status": "submitted"
+    }
+  ],
+  "staff": [
+    {
+      "key": "teacher",
+      "display_name": "Synthetic Teacher",
+      "staff_role": "teacher",
+      "active": true
+    }
+  ],
+  "assertions": [
+    [
+      "anonymous",
+      "protected learning evidence",
+      "DENY"
+    ],
+    [
+      "student_a",
+      "own learner/evidence",
+      "ALLOW"
+    ],
+    [
+      "student_a",
+      "student_b learner/evidence",
+      "DENY"
+    ],
+    [
+      "student_a",
+      "assessment write",
+      "DENY"
+    ],
+    [
+      "student_b",
+      "own learner/evidence",
+      "ALLOW"
+    ],
+    [
+      "student_b",
+      "student_a learner/evidence",
+      "DENY"
+    ],
+    [
+      "student_b",
+      "assessment write",
+      "DENY"
+    ],
+    [
+      "teacher",
+      "intended learner evidence",
+      "ALLOW"
+    ],
+    [
+      "teacher",
+      "assessment write",
+      "ALLOW"
+    ],
+    [
+      "ordinary_client",
+      "audit_event",
+      "DENY"
+    ]
+  ],
+  "rules": [
+    "Use genuine Better Auth signed sessions for E2E assertions.",
+    "Never store password, OTP, JWT, session cookie, or privileged database credential in this fixture.",
+    "Fail closed when a required signed role session is unavailable."
+  ]
+}
