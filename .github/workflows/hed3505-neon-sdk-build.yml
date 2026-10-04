@@ -2,6 +2,12 @@ name: HED3505 Neon SDK Build
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'wordpress/final-learning-studio/sdk/**'
+      - '.github/workflows/hed3505-neon-sdk-build.yml'
   push:
     branches:
       - hed3505-wordpress-final-learning-studio-01
