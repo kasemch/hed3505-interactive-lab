@@ -1,0 +1,41 @@
+name: HED3505 Neon SDK Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - hed3505-wordpress-final-learning-studio-01
+    paths:
+      - 'wordpress/final-learning-studio/sdk/**'
+      - '.github/workflows/hed3505-neon-sdk-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wordpress/final-learning-studio/sdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: wordpress/final-learning-studio/sdk/package-lock.json
+      - name: Install dependencies
+        run: npm install --package-lock-only && npm ci
+      - name: Build browser bundle
+        run: npm run build
+      - name: Security sanity checks
+        run: |
+          test -s dist/hed3505-neon-auth.js
+          ! grep -Eqi '(password[[:space:]]*[:=][[:space:]]*["'\''"][^"'\'']+|eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)' dist/hed3505-neon-auth.js
+          grep -q 'learner_identity' dist/hed3505-neon-auth.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hed3505-neon-auth-browser
+          path: wordpress/final-learning-studio/sdk/dist/hed3505-neon-auth.js
+          if-no-files-found: error
