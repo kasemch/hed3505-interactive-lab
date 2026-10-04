@@ -1,6 +1,6 @@
 # HED3505 Authenticated RLS E2E Gate — 01
 
-Status: PASS WITH ONE AUTHORIZATION-MATRIX CONDITION
+Status: PASS FOR SINGLE-IDENTITY E2E / MULTI-IDENTITY VALIDATION DEFERRED BEFORE REAL-STUDENT ACTIVATION
 Scope: STAGING / Neon sandbox only
 
 ## Verified evidence
@@ -45,3 +45,9 @@ Until the remaining authenticated role matrix passes:
 - Neon production branch: HOLD
 - GitHub PR merge: HOLD
 - GitHub Pages retirement/redirect: HOLD
+
+## Approved continuation strategy
+
+Because only one OTP-capable test email is available, continued non-production engineering uses the approved Single-Identity E2E + Synthetic RBAC Strategy documented in `docs/qa/SINGLE-IDENTITY-E2E-SYNTHETIC-RBAC-STRATEGY-03.md`.
+
+This permits synthetic-only C2/C3/Hearing persistence engineering on staging/sandbox. Multi-identity live validation remains mandatory before real-student activation and must not be reported as already passed.
