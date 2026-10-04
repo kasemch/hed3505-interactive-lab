@@ -1,0 +1,37 @@
+{
+  "fixture_version": "1.0",
+  "classification": "SYNTHETIC / SANDBOX ONLY",
+  "C2": {
+    "objective": "ประเมินผลการดำเนินงานโปรแกรมสุขภาพในโรงเรียน",
+    "evaluation_question": "โปรแกรมบรรลุผลตามวัตถุประสงค์ที่กำหนดหรือไม่",
+    "indicator": "ตัวชี้วัดผลลัพธ์ที่สอดคล้องกับคำถามประเมิน",
+    "data_source": "ข้อมูลกรณีศึกษาโรงเรียนอรุณพัฒนา",
+    "instrument": "เครื่องมือเก็บข้อมูลที่สอดคล้องกับตัวชี้วัด",
+    "quality_check": "ตรวจความตรง ความเชื่อมั่น และคุณภาพข้อมูลก่อนตีความ",
+    "criterion": "เปรียบเทียบหลักฐานกับเกณฑ์ที่กำหนดก่อนตัดสิน",
+    "possible_decision": "COLLECT MORE EVIDENCE",
+    "peer_feedback": "ตรวจความสอดคล้อง Objective → Question → Indicator → Source → Instrument → Criterion",
+    "final_revision": "ปรับสายโซ่การประเมินให้แต่ละองค์ประกอบเชื่อมโยงกัน",
+    "synthetic": true
+  },
+  "C3": {
+    "evaluation_question": "หลักฐานที่มีเพียงพอต่อการตัดสินผลโปรแกรมหรือไม่",
+    "missing_evidence": "หลักฐานเพิ่มเติมที่ตอบคำถามประเมินโดยตรง",
+    "data_source": "แหล่งข้อมูลที่เหมาะสมกับหลักฐานที่ขาด",
+    "instrument": "เครื่องมือที่เหมาะสมกับข้อมูลเพิ่มเติม",
+    "rationale": "ลดความไม่แน่นอนของข้อสรุปและหลีกเลี่ยงการตัดสินเกินหลักฐาน",
+    "decision_improved": "ช่วยเลือกระหว่าง CONTINUE WITH MODIFICATION และ COLLECT MORE EVIDENCE",
+    "confidence": "moderate",
+    "synthetic": true
+  },
+  "HEARING": {
+    "evidence": "ใช้หลักฐานหลายแหล่งจากกรณีศึกษาโดยไม่สร้างข้อมูลเพิ่ม",
+    "interpretation": "แยกข้อเท็จจริงออกจากการตีความและข้อสันนิษฐาน",
+    "criterion": "ใช้เกณฑ์ที่ระบุชัดก่อนตัดสิน",
+    "judgment": "หลักฐานยังมีข้อจำกัด จึงไม่สรุปเกินข้อมูล",
+    "limitation": "หลักฐานบางตัววัดคนละมิติและไม่เพียงพอสำหรับข้อสรุปเชิงเหตุผล",
+    "recommendation_action": "COLLECT MORE EVIDENCE แล้วประเมินซ้ำ",
+    "confidence": "moderate",
+    "synthetic": true
+  }
+}
