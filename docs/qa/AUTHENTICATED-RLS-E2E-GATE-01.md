@@ -1,48 +1,47 @@
 # HED3505 Authenticated RLS E2E Gate — 01
 
-Status: PENDING AUTHENTICATED SESSION
+Status: PASS WITH ONE AUTHORIZATION-MATRIX CONDITION
 Scope: STAGING / Neon sandbox only
 
-## Preconditions already verified
+## Verified evidence
 
-- Neon Managed Better Auth provisioned on the sandbox branch.
-- Google OAuth configured.
-- staging.kengkasem.com is a trusted domain.
+- Neon Managed Better Auth is provisioned on the sandbox branch.
+- staging.kengkasem.com is a trusted origin.
 - Neon Data API exposes only schema hed3505.
-- RLS is enabled on all HED3505 application tables.
-- Anonymous/deny path passed.
-- Synthetic fixture readiness passed: two learners, two activity attempts, one active teacher.
-- Official SDK/Auth integration path is locked in NAI-01.
+- RLS is enabled on all six HED3505 application tables.
+- Anonymous/deny path: PASS.
+- Synthetic fixtures: PASS — two pilot learners, two submitted activity attempts, one active teacher.
+- Genuine WordPress staging OTP authentication -> Neon JS SDK -> authenticated session -> Data API -> RLS probe: PASS.
+- The authenticated Kasem test identity has no learner mapping and returned 0 learner rows: PASS privacy-by-default.
+- audit_event has RLS enabled and zero client policies: deny-by-default configuration PASS.
+- No real student data, password, OTP, JWT, or session cookie was added to the repository.
 
-## Required E2E evidence
+## Remaining condition
 
-Do not mark this gate PASS until a genuine Neon Auth session and JWT prove all of the following through the Data API:
+The following assertions still require genuine signed Student A, Student B, and Teacher sessions and MUST NOT be inferred from owner SQL or synthetic fixtures alone:
 
-1. anonymous learning-evidence access is denied;
-2. Student A can read only Student A learner identity/evidence;
-3. Student B can read only Student B learner identity/evidence;
-4. the two learner identities remain isolated;
-5. a student cannot write an assessment;
-6. an authorized teacher resolves to active course_staff and receives only intended staff access;
-7. audit_event is not exposed to ordinary clients;
-8. no password, OTP, session cookie, JWT, or API credential is emitted to repository logs or the student UI.
+1. Student A can read only Student A learner/evidence rows.
+2. Student B can read only Student B learner/evidence rows.
+3. Student A and Student B cannot read each other's rows.
+4. A student cannot create or modify assessment records through the Data API.
+5. An active teacher can perform the intended assessment workflow through the Data API.
+
+Automation harness: tests/neon/hed3505-authorization-matrix.mjs
+Pilot enrollment design: docs/qa/CONTROLLED-PILOT-ROLE-ENROLLMENT-CPRE-01.md
 
 ## Prohibited shortcuts
 
-- No fabricated JWTs.
+- No fabricated JWTs or session cookies.
 - No direct password-hash injection.
-- No weakening RLS, grants, email verification, or trusted-origin controls.
-- No use of owner SQL as a substitute for authenticated E2E evidence.
-- No real student records during this gate.
+- No weakening RLS, grants, email verification, trusted origins, or Better Auth.
+- No owner SQL as a substitute for authenticated E2E evidence.
+- No real student academic records during this gate.
 
 ## Release holds
 
-Until this gate passes:
-
+Until the remaining authenticated role matrix passes:
 - Real-student access: HOLD
 - Production WordPress: HOLD
 - Neon production branch: HOLD
 - GitHub PR merge: HOLD
 - GitHub Pages retirement/redirect: HOLD
-
-The existing password-based CI harness is non-authoritative until supported test credentials are available through Neon Auth.
