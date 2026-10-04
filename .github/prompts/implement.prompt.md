@@ -1,0 +1,1 @@
+Implement the requested HED3505 task with minimal repository context. Preserve static/mobile-first design and controlled-preview governance, validate affected behavior, and stop before merge/publication/deployment.
