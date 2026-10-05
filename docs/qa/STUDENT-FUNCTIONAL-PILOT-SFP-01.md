@@ -1,47 +1,60 @@
 # HED3505 Student Functional Pilot — SFP-01
 
-Status: TECHNICAL PILOT PASS / HUMAN STUDENT PILOT PENDING
+Status: PRE-REAL-STUDENT ENGINEERING PASS / RUNTIME GATES BLOCKED — NOT EXECUTED
 Target: WordPress staging, mobile-first
-Date: 2026-10-03
+Baseline: HED3505 Independent Learning v3.2
+Date updated: 2026-10-05
 
-## Verified
-- Challenge 1 renders radio controls, two reasoning text areas, and self-check checklist.
-- Challenge 2 renders the eight-step Evaluation Chain, peer-audit controls, and peer feedback.
-- Challenge 3 renders missing-evidence planning, confidence controls, and rationale.
-- All text inputs/textareas have explicit labels.
-- Radio groups use fieldset/legend.
-- Challenge progression links forward to Evaluation Hearing.
-- No student identifier is requested.
-- No form action/database persistence is present.
-- Teacher Key remains absent from student DOM.
+## Current verified student contract
+- Mission 1 — Evidence Detective: individual reasoning from evidence toward interpretation/judgment, followed by guided feedback and revision.
+- Mission 2 — Build & Challenge: Evaluation Chain plus **Self-Audit** and Missing Evidence Challenge. Peer Audit is not part of the current student-facing baseline.
+- Mission 3 — Individual Evaluation Decision Challenge: the learner rotates perspectives (Evaluator → Evidence Auditor → Stakeholder → Decision Maker) and defends one of four decisions: CONTINUE / CONTINUE WITH MODIFICATION / COLLECT MORE EVIDENCE / DISCONTINUE.
+- The current reasoning chain is Evidence → Interpretation → Limitation → Criterion → Judgment → Recommendation → Action → Re-evaluation.
+- There is no predetermined correct final decision; defensibility of reasoning is the target.
+- Teacher Key remains separated from the student-facing experience.
+- Page views alone do not count as completion.
 
-## Mobile audit
-Performance 100/100
-Best Practices 100/100
-Accessibility 90/100
-LCP 1.1 s
-CLS 0
-TBT 0 ms
-FCP 0.9 s
-Speed Index 2.7 s
-Field data unavailable; laboratory data only.
+## Current staging QA evidence
+Latest controlled Lighthouse evidence:
+- Performance: 100/100
+- Accessibility: 97/100 — PASS WITH CONDITION
+- Best Practices: 100/100
+- LCP: 1.0 s
+- CLS: 0
+- TBT: 30 ms
+- FCP: 0.9 s
+- Speed Index: 2.8 s
+- Field data: unavailable; laboratory data only.
 
-Open issue: one color-contrast finding from rendered theme styling.
+Open accessibility item: one color-contrast finding remains. Do not claim it is fixed without a new rendered audit identifying and closing the actual offending element.
 
-## Assessment/persistence recommendation
-Challenge 1 — PRACTICE / formative; do not score by default. Preserve revision thinking only if portfolio evidence is later desired.
-Challenge 2 — EVIDENCE CANDIDATE; the Final Evaluation Chain is suitable for portfolio/assessment because it directly demonstrates evaluation-design alignment.
-Challenge 3 — EVIDENCE CANDIDATE; missing-evidence rationale and confidence justification demonstrate evidence prioritization and evaluative reasoning.
-Evaluation Hearing — GROUP PERFORMANCE EVIDENCE candidate; use rubric rather than a single predetermined answer.
+## Assessment and persistence contract
+- Mission 1 — learning evidence may preserve first answer → guided feedback viewed → revised answer according to the approved v3.2 lifecycle.
+- Mission 2 — EVIDENCE CANDIDATE: Evaluation Chain, Self-Audit, missing-evidence rationale, evidence-confidence judgment and revision demonstrate evaluation-design alignment and evaluative reasoning.
+- Mission 3 — EVIDENCE CANDIDATE: individual decision reasoning and revision demonstrate defensible evaluation judgment. The former group Evaluation Hearing is superseded as current pedagogy and retained only in historical/legacy-storage traceability where necessary.
+- Completion must be derived from authoritative learning records; a page view or client-side completion flag is not authoritative.
 
-## Data-minimization rule for future persistence
-If persistence is approved later, store only what is needed for learning evidence: activity ID, pseudonymous/authorized learner identifier, response payload, revision/version, timestamp, rubric/feedback state. Do not collect unrelated personal data.
+## Data minimization
+Persist only what is necessary for learning evidence and authorization: activity/mission identity, authorized learner mapping, response/evidence payload, revision/version, required feedback-view state, completion state where server-authoritative, timestamps, and authorized assessment/feedback state. Do not collect unrelated personal data. Do not store passwords, OTPs, JWTs or session cookies in repository evidence.
+
+## Runtime boundary
+The code/build/documentation contract is ready for runtime verification, but the current tool surface does not expose callable Neon runtime actions. Therefore the following are **BLOCKED — NOT EXECUTED** rather than failed:
+- Student A/B/Teacher authenticated RLS matrix
+- positive Mission 1–3 persistence
+- feedback-view and revision lifecycle persistence
+- server-authoritative completion recomputation
+- teacher course_staff authorization
+- certificate eligibility/idempotency and VALID/REVOKED/NOT FOUND verification
+
+Do not switch to Supabase, weaken RLS, use the Neon production branch, or infer runtime PASS from static/build CI.
 
 ## Gates
-Technical student flow: PASS
-Privacy/non-persistence: PASS
-Accessibility: PASS WITH CONDITION (theme contrast)
-Real-student usability: PENDING
-Database/persistence: NOT AUTHORIZED
-Production: HOLD
-PR merge: HOLD
+- Independent-learning student contract: PASS
+- Static/code/build readiness: PASS
+- Accessibility: PASS WITH CONDITION (one contrast finding)
+- Runtime Auth/RLS/Persistence/Completion/Certificate E2E: BLOCKED — NOT EXECUTED
+- Real-student usability/activation: HOLD
+- Real certificate: HOLD
+- Production: HOLD
+- PR merge: HOLD
+- GitHub Pages retirement/redirect: HOLD
