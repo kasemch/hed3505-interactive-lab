@@ -1,31 +1,45 @@
 # HED3505 Persistence Sandbox Readiness — PSR-01
 
-Status: PASS WITH PAYLOAD-COMPLETENESS CONDITION
+Status: STATIC/SYNTHETIC CONTRACT READY / RUNTIME VERIFICATION BLOCKED — NOT EXECUTED
 Scope: Neon sandbox / synthetic data only
+Baseline: HED3505 Independent Learning v3.2
+Updated: 2026-10-05
 
-## Verified
-- C2 synthetic activity_attempt exists and is submitted.
-- C3 synthetic activity_attempt exists and is submitted.
-- Both payloads are explicitly marked synthetic.
-- group_hearing persistence table exists with constrained decision, evidence, criterion, limitation, recommendation, confidence, and timestamps.
+## Verified at repository-contract level
+- Synthetic learning-evidence fixtures exist and are explicitly classified SYNTHETIC / SANDBOX ONLY.
+- Mission 2 target evidence is represented as Evaluation Chain + Self-Audit + revision; Peer Audit is superseded in the current student-facing baseline.
+- Mission 2 Missing Evidence evidence includes evaluation question, missing evidence, data source, instrument, rationale, improved decision and confidence.
+- Mission 3 target semantic payload follows the individual Evidence → Interpretation → Limitation → Criterion → Judgment → Recommendation → Action reasoning chain and includes confidence.
+- Mission 3 supports the four approved decision families: CONTINUE / CONTINUE WITH MODIFICATION / COLLECT MORE EVIDENCE / DISCONTINUE.
 - No real student records are authorized for this phase.
 
-## Observed condition
-The existing C2/C3 fixtures are deliberately minimal smoke-test payloads and do not yet contain every approved pedagogical field. Do not misrepresent them as complete learning evidence.
+## Legacy storage boundary
+The existing `group_hearing` table is a legacy storage implementation detail. Current student-facing/API semantics use Mission 3 / Individual Evaluation Decision and `saveEvaluationDecision()`; the compatibility alias/storage mapping must not be interpreted as current group pedagogy.
 
-Approved C2 target payload:
-objective; evaluation_question; indicator; data_source; instrument; quality_check; criterion; possible_decision; peer_feedback; final_revision.
+The legacy table can store evidence, criterion, limitation, recommendation, decision code, confidence and timestamps, but interpretation/judgment do not yet have independently verified dedicated runtime persistence fields. Do not perform a destructive migration or rename without Neon sandbox access, RLS tests and a reversible migration plan.
 
-Approved C3 target payload:
-evaluation_question; missing_evidence; data_source; instrument; rationale; decision_improved; confidence.
+## Runtime evidence rule
+Earlier synthetic fixtures or architecture descriptions do **not** prove current database state. Because callable Neon runtime actions are not exposed in the current tool surface, do not claim that synthetic rows currently exist, that RLS has passed for Student A/B/Teacher, or that Mission 1–3 persistence has passed.
 
-Approved Hearing semantic payload:
-evidence; interpretation; criterion; judgment; limitation; recommendation/action; confidence.
+When Neon sandbox runtime becomes callable, execute in order:
+1. verify project/branch/database are the approved non-production sandbox;
+2. anonymous deny;
+3. Student A/B ownership isolation;
+4. non-enrolled denial;
+5. authorized `course_staff` teacher access;
+6. positive Mission 1–3 persistence;
+7. feedback-view and revision-history persistence;
+8. server-authoritative completion recomputation;
+9. certificate eligibility/idempotency and verification privacy tests.
 
-The current group_hearing schema stores evidence, criterion, limitation, recommendation, decision_code, and confidence but does not separately persist interpretation and judgment beyond the decision field. Treat schema expansion as a design item; do not perform destructive migration.
+Do not request or persist user passwords/OTPs/JWTs/session cookies. Do not switch to Supabase or weaken RLS.
 
 ## Gate
-Synthetic persistence architecture = READY.
-Complete payload fixture test = PENDING.
-Real-student persistence = HOLD.
-Production = HOLD.
+- Synthetic payload contract: READY
+- Independent Learning v3.2 semantic alignment: PASS
+- Neon runtime persistence: BLOCKED — NOT EXECUTED
+- Authenticated RLS matrix: BLOCKED — NOT EXECUTED
+- Real-student persistence: HOLD
+- Real certificate: HOLD
+- Production: HOLD
+- PR merge: HOLD
