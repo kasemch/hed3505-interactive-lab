@@ -1,13 +1,84 @@
-name: HED3505 Neon Security Test
+name: HED3505 Neon Controlled Runtime Gate
 
-# NON-PRODUCTION manual runtime gate.
-# Authentication must use short-lived OTP values supplied only for the run.
-# Never store passwords, OTPs, JWTs, or session cookies in the repository.
+# NON-PRODUCTION ONLY.
+# Two-stage runner:
+# 1) preflight uses no learner credentials and proves endpoint/sandbox guardrails;
+# 2) authenticated RLS matrix runs only when explicitly requested and requires
+#    short-lived credentials supplied through GitHub Secrets for that run.
+# Never print or persist passwords, OTPs, JWTs, session cookies, or database URLs.
+
 on:
   workflow_dispatch:
+    inputs:
+      gate:
+        description: 'Runtime gate to execute'
+        required: true
+        default: 'preflight'
+        type: choice
+        options:
+          - preflight
+          - authenticated-rls
+      confirm_sandbox:
+        description: 'Type HED3505-SANDBOX to authorize non-production network tests'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hed3505-neon-controlled-runtime
+  cancel-in-progress: false
+
+env:
+  HED3505_EXPECTED_STAGING_ORIGIN: https://staging.kengkasem.com
+  HED3505_EXPECTED_PROJECT_ID: winter-sun-55259147
+  HED3505_EXPECTED_SANDBOX_BRANCH_ID: br-steep-hall-b3nm8s2p
+  HED3505_EXPECTED_DATABASE: neondb
+  HED3505_FORBIDDEN_PRODUCTION_BRANCH_ID: br-hidden-dream-b3jh4lgz
 
 jobs:
-  security-test:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
+      HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
+    steps:
+      - name: Validate explicit sandbox authorization
+        shell: bash
+        run: |
+          test '${{ inputs.confirm_sandbox }}' = 'HED3505-SANDBOX' || {
+            echo '::error::Sandbox confirmation mismatch; refusing runtime test.'
+            exit 1
+          }
+      - name: Validate endpoint configuration without printing secrets
+        shell: bash
+        run: |
+          test -n "$HED3505_NEON_AUTH_URL" || { echo '::error::Missing HED3505_NEON_AUTH_URL'; exit 1; }
+          test -n "$HED3505_NEON_DATA_API_URL" || { echo '::error::Missing HED3505_NEON_DATA_API_URL'; exit 1; }
+          case "$HED3505_NEON_AUTH_URL" in https://*) ;; *) echo '::error::Auth endpoint must use HTTPS'; exit 1;; esac
+          case "$HED3505_NEON_DATA_API_URL" in https://*) ;; *) echo '::error::Data API endpoint must use HTTPS'; exit 1;; esac
+          if [[ "$HED3505_NEON_AUTH_URL $HED3505_NEON_DATA_API_URL" == *"$HED3505_FORBIDDEN_PRODUCTION_BRANCH_ID"* ]]; then
+            echo '::error::Production branch identifier detected; refusing runtime test.'
+            exit 1
+          fi
+          echo 'Endpoint presence/HTTPS/production-branch guard: PASS'
+      - name: Anonymous deny probe
+        shell: bash
+        run: |
+          status=$(curl --silent --show-error --output /tmp/hed3505-anon-body --write-out '%{http_code}' \
+            --header 'accept-profile: hed3505' \
+            "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1")
+          rm -f /tmp/hed3505-anon-body
+          case "$status" in
+            401|403) echo 'Anonymous deny: PASS' ;;
+            *) echo "::error::Anonymous request was not denied (HTTP $status)"; exit 1 ;;
+          esac
+
+  authenticated-rls:
+    if: ${{ inputs.gate == 'authenticated-rls' }}
+    needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -15,7 +86,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate ephemeral runtime inputs
+      - name: Validate ephemeral authenticated inputs without printing values
         shell: bash
         env:
           HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
@@ -30,6 +101,7 @@ jobs:
           for n in HED3505_NEON_AUTH_URL HED3505_NEON_DATA_API_URL HED3505_STUDENT_A_EMAIL HED3505_STUDENT_A_OTP HED3505_STUDENT_B_EMAIL HED3505_STUDENT_B_OTP HED3505_TEACHER_EMAIL HED3505_TEACHER_OTP; do
             test -n "${!n}" || { echo "::error::Missing required ephemeral runtime input: $n"; exit 1; }
           done
+          echo 'Ephemeral input presence: PASS'
       - name: Run synthetic Auth/RLS matrix
         env:
           HED3505_STAGING_ORIGIN: https://staging.kengkasem.com
