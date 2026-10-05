@@ -1,9 +1,9 @@
 name: HED3505 Neon Controlled Runtime Gate
 
 # NON-PRODUCTION ONLY.
-# Automatic PR runs execute PRE-FLIGHT ONLY: endpoint guardrails + anonymous deny.
+# Automatic PR runs execute PRE-FLIGHT ONLY: endpoint guardrails + anonymous-deny diagnostics.
 # Authenticated RLS remains explicit workflow_dispatch and requires ephemeral credentials.
-# Never print or persist passwords, OTPs, JWTs, session cookies, or database URLs.
+# Never print or persist passwords, OTPs, JWTs, session cookies, database URLs, or response bodies.
 
 on:
   pull_request:
@@ -73,17 +73,57 @@ jobs:
             exit 1
           fi
           echo 'Endpoint presence/HTTPS/production-branch guard: PASS'
-      - name: Anonymous deny probe
+      - name: Anonymous deny diagnostic probe
         shell: bash
         run: |
-          status=$(curl --silent --show-error --output /tmp/hed3505-anon-body --write-out '%{http_code}' \
+          probe() {
+            local label="$1"
+            shift
+            local status
+            status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$@")
+            case "$status" in
+              401|403)
+                echo "$label: DENY (HTTP $status)"
+                return 0
+                ;;
+              400|404|405|406|415|422)
+                echo "$label: REQUEST_CONTRACT_REJECTED (HTTP $status)"
+                return 2
+                ;;
+              2??)
+                echo "::error::$label unexpectedly returned HTTP $status; anonymous access cannot be accepted."
+                return 1
+                ;;
+              *)
+                echo "$label: OTHER_HTTP_$status"
+                return 3
+                ;;
+            esac
+          }
+
+          set +e
+          probe 'schema-header' \
             --header 'accept-profile: hed3505' \
-            "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1")
-          rm -f /tmp/hed3505-anon-body
-          case "$status" in
-            401|403) echo 'Anonymous deny: PASS' ;;
-            *) echo "::error::Anonymous request was not denied (HTTP $status)"; exit 1 ;;
-          esac
+            "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"
+          schema_rc=$?
+          probe 'schema-query-param' \
+            "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1&schema=hed3505"
+          query_rc=$?
+          probe 'default-profile-control' \
+            "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"
+          control_rc=$?
+          set -e
+
+          if [[ $schema_rc -eq 0 || $query_rc -eq 0 ]]; then
+            echo 'Anonymous deny: PASS'
+            exit 0
+          fi
+          if [[ $schema_rc -eq 1 || $query_rc -eq 1 || $control_rc -eq 1 ]]; then
+            echo '::error::Anonymous request returned a successful 2xx response. Security review required.'
+            exit 1
+          fi
+          echo '::error::Anonymous deny remains unverified: request contract/schema exposure rejected before an authorization denial was observed.'
+          exit 1
 
   authenticated-rls:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.gate == 'authenticated-rls' }}
