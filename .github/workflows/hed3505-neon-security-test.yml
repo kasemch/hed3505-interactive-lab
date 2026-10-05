@@ -1,13 +1,18 @@
 name: HED3505 Neon Controlled Runtime Gate
 
 # NON-PRODUCTION ONLY.
-# Two-stage runner:
-# 1) preflight uses no learner credentials and proves endpoint/sandbox guardrails;
-# 2) authenticated RLS matrix runs only when explicitly requested and requires
-#    short-lived credentials supplied through GitHub Secrets for that run.
+# Automatic PR runs execute PRE-FLIGHT ONLY: endpoint guardrails + anonymous deny.
+# Authenticated RLS remains explicit workflow_dispatch and requires ephemeral credentials.
 # Never print or persist passwords, OTPs, JWTs, session cookies, or database URLs.
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/hed3505-neon-security-test.yml'
+      - 'tests/neon/**'
+      - 'wordpress/hed3505-neon-auth/**'
   workflow_dispatch:
     inputs:
       gate:
@@ -27,7 +32,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: hed3505-neon-controlled-runtime
+  group: hed3505-neon-controlled-runtime-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 env:
@@ -45,13 +50,17 @@ jobs:
       HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
       HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
     steps:
-      - name: Validate explicit sandbox authorization
+      - name: Validate trigger and sandbox authorization
         shell: bash
         run: |
-          test '${{ inputs.confirm_sandbox }}' = 'HED3505-SANDBOX' || {
-            echo '::error::Sandbox confirmation mismatch; refusing runtime test.'
-            exit 1
-          }
+          if [[ '${{ github.event_name }}' == 'workflow_dispatch' ]]; then
+            test '${{ inputs.confirm_sandbox }}' = 'HED3505-SANDBOX' || {
+              echo '::error::Sandbox confirmation mismatch; refusing runtime test.'
+              exit 1
+            }
+          else
+            echo 'PR-triggered preflight: authenticated gate is disabled.'
+          fi
       - name: Validate endpoint configuration without printing secrets
         shell: bash
         run: |
@@ -77,7 +86,7 @@ jobs:
           esac
 
   authenticated-rls:
-    if: ${{ inputs.gate == 'authenticated-rls' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.gate == 'authenticated-rls' }}
     needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 10
