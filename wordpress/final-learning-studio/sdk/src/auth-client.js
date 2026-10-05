@@ -32,7 +32,6 @@ export async function rlsProbe() {
   return { ok: true, stage: 'rls', rows: Array.isArray(result.data) ? result.data.length : 0 };
 }
 
-
 function requireSession(session) {
   if (session?.error || !session?.data?.session) {
     throw new Error('AUTH_REQUIRED');
@@ -73,13 +72,23 @@ export async function saveActivityEvidence(activityCode, payload, confidence = n
 
 const DECISION_CODES = new Set(['CONTINUE','CONTINUE_WITH_MODIFICATION','COLLECT_MORE_EVIDENCE','DISCONTINUE']);
 
-export async function saveHearingEvidence(payload) {
+/**
+ * Mission 3 v3.2 persistence contract.
+ * The current sandbox schema still uses the legacy `group_hearing` table name.
+ * This function deliberately exposes independent-learning semantics to the UI;
+ * the legacy storage name remains an implementation detail until a reversible
+ * schema migration is runtime-tested in Neon sandbox.
+ */
+export async function saveEvaluationDecision(payload) {
   const session = await client.auth.getSession();
   requireSession(session);
   if (!DECISION_CODES.has(payload?.decision_code)) throw new Error('INVALID_DECISION_CODE');
 
+  const learner = await client.from('learner_identity').select('learner_id').single();
+  if (learner.error || !learner.data?.learner_id) throw new Error('LEARNER_NOT_ENROLLED');
+
   const row = {
-    group_id: payload.group_id,
+    group_id: payload.storage_scope_id || payload.group_id || learner.data.learner_id,
     decision_code: payload.decision_code,
     evidence_summary: payload.evidence_summary,
     interpretation_summary: payload.interpretation_summary,
@@ -90,7 +99,11 @@ export async function saveHearingEvidence(payload) {
     confidence_level: payload.confidence_level || null,
     submitted_at: new Date().toISOString()
   };
-  const result = await client.from('group_hearing').insert(row).select('hearing_id,group_id,decision_code,confidence_level,submitted_at').single();
-  if (result.error) throw new Error(result.error.message || 'HEARING_SAVE_FAILED');
+  const result = await client.from('group_hearing').insert(row).select('hearing_id,decision_code,confidence_level,submitted_at').single();
+  if (result.error) throw new Error(result.error.message || 'EVALUATION_DECISION_SAVE_FAILED');
   return { ok: true, data: result.data };
 }
+
+// Temporary compatibility alias for pre-v3.2 staging code only.
+// Do not use this name in new student-facing code.
+export const saveHearingEvidence = saveEvaluationDecision;
