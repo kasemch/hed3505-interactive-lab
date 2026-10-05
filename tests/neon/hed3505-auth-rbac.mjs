@@ -4,7 +4,7 @@ const ORIGIN = process.env.HED3505_STAGING_ORIGIN || 'https://staging.kengkasem.
 
 function required(name) {
   const v = process.env[name];
-  if (!v) throw new Error(`Missing required secret/environment: ${name}`);
+  if (!v) throw new Error(`Missing required ephemeral runtime input: ${name}`);
   return v;
 }
 async function jsonFetch(url, options={}) {
@@ -17,15 +17,15 @@ function cookieHeader(headers) {
   const raw = typeof headers.getSetCookie === 'function' ? headers.getSetCookie() : [headers.get('set-cookie')].filter(Boolean);
   return raw.map(v => v.split(';',1)[0]).join('; ');
 }
-async function signInAndToken(email,password){
-  const login=await jsonFetch(`${AUTH}/sign-in/email`,{
+async function signInOtpAndToken(email,otp){
+  const login=await jsonFetch(`${AUTH}/sign-in/email-otp`,{
     method:'POST',
     headers:{'content-type':'application/json','origin':ORIGIN},
-    body:JSON.stringify({email,password,callbackURL:ORIGIN+'/hed3505-final-learning-studio/'})
+    body:JSON.stringify({email,otp,callbackURL:ORIGIN+'/hed3505-final-learning-studio/'})
   });
-  if(!login.ok) throw new Error(`sign-in failed for synthetic account: HTTP ${login.status}`);
+  if(!login.ok) throw new Error(`OTP sign-in failed for synthetic account: HTTP ${login.status}`);
   const cookie=cookieHeader(login.headers);
-  if(!cookie) throw new Error('sign-in succeeded but no session cookie was returned');
+  if(!cookie) throw new Error('OTP sign-in succeeded but no session cookie was returned');
 
   const session=await jsonFetch(`${AUTH}/get-session`,{
     headers:{origin:ORIGIN,cookie}
@@ -46,18 +46,18 @@ async function api(path,token,options={}){
 }
 function assert(cond,msg){if(!cond) throw new Error(msg);}
 
-const studentA={email:required('HED3505_STUDENT_A_EMAIL'),password:required('HED3505_STUDENT_A_PASSWORD')};
-const studentB={email:required('HED3505_STUDENT_B_EMAIL'),password:required('HED3505_STUDENT_B_PASSWORD')};
-const teacher={email:required('HED3505_TEACHER_EMAIL'),password:required('HED3505_TEACHER_PASSWORD')};
+const studentA={email:required('HED3505_STUDENT_A_EMAIL'),otp:required('HED3505_STUDENT_A_OTP')};
+const studentB={email:required('HED3505_STUDENT_B_EMAIL'),otp:required('HED3505_STUDENT_B_OTP')};
+const teacher={email:required('HED3505_TEACHER_EMAIL'),otp:required('HED3505_TEACHER_OTP')};
 if(!AUTH||!API) throw new Error('Missing Neon endpoint configuration');
 
 const anon=await jsonFetch(`${API}/learner_identity?select=learner_id`,{headers:{'accept-profile':'hed3505'}});
 assert(anon.status===401 || anon.status===403,'Anonymous learning-evidence access was not denied');
 
 const [a,b,t]=await Promise.all([
-  signInAndToken(studentA.email,studentA.password),
-  signInAndToken(studentB.email,studentB.password),
-  signInAndToken(teacher.email,teacher.password)
+  signInOtpAndToken(studentA.email,studentA.otp),
+  signInOtpAndToken(studentB.email,studentB.otp),
+  signInOtpAndToken(teacher.email,teacher.otp)
 ]);
 
 const aOwn=await api('learner_identity?select=learner_id,auth_user_id',a);
