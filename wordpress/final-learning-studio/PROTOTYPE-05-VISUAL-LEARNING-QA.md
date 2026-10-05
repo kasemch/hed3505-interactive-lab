@@ -1,34 +1,31 @@
 # HED3505 Prototype 05 — Visual & Learning Experience QA
 
-## Gate finding
-WordPress page 117 remains DRAFT. Anonymous rendering correctly returns 404; therefore public Lighthouse/visual audit cannot be treated as valid evidence yet. Do not publish merely to run QA.
+## Status
+Historical Prototype-05 findings have been superseded by the current STAGING acceptance evidence. Page 117 is now a STAGING-only published preview for controlled visual/learning QA; this document must not be used to infer Production or real-student readiness.
 
-## Visual system for acceptance build
-- Direction: academic learning studio; calm, modern, high-information clarity.
-- Hierarchy: Hero → mission → master cycle → evidence board → 7 learning cards → hearing → debrief → exam readiness → exit ticket.
-- Mobile-first: single-column reading; minimum 16px body text; 44px interactive targets; tables must horizontally scroll or transform to cards.
-- Progressive disclosure: self-study modules use native details/summary to reduce cognitive load.
-- Navigation: three anchors at top — Review / Hearing / Exam.
-- Accessibility: semantic H1→H2→H3 hierarchy; table th + scope; details/summary keyboard-native; meaningful link text; no color-only status cues.
-- Student safety: teacher key excluded; no personal student data; case values carry causal-inference warning.
-- Learning integrity: “Need More Evidence” remains a valid response with required justification; confidence rating must include rationale.
+## Current visual system
+- Direction: academic Learning Evidence Studio; calm, modern, high-information clarity.
+- Student route: Orientation → Mission 1 → Feedback → Revision → Mission 2 → Self-Audit / Missing Evidence → Feedback → Revision → Mission 3 Individual Evaluation Decision Challenge → Feedback → Revision → Final Review → Exam Readiness → Completion.
+- Evidence reasoning: Evidence → Interpretation → Limitation → Criterion → Judgment → Recommendation → Action / Re-evaluation.
+- Mobile-first: single-column reading on narrow viewports; Evidence Board remains horizontally scrollable/focusable where needed.
+- Progressive disclosure: native details/summary remains appropriate for self-study content.
+- Accessibility: semantic heading hierarchy, table headers with scope, keyboard-native disclosure, meaningful link text, and no color-only completion logic.
+- Student safety: Teacher Key excluded from student content; no personal student records are exposed by this page.
+- Learning integrity: COLLECT MORE EVIDENCE / “ยังสรุปไม่ได้” remains academically valid when justified. Confidence requires a rationale.
+- Completion integrity: page views alone do not count as completion.
 
-## QA completed from stored content
-PASS — one H1 and structured section headings
-PASS — table column headers include scope
-PASS — internal anchors identify the three principal journeys
-PASS — self-study uses keyboard-native details/summary
-PASS — teacher key absent from student content
-PASS — no production/student records involved
-PASS — no new unsupported case values introduced
-PASS — causal-claim warning retained
+## Current QA evidence
+PASS — one page-title H1 and structured student sections.
+PASS — Evidence Board retains scoped column headers and keyboard-focusable horizontal-scroll behavior.
+PASS — Teacher Key is absent from rendered student content.
+PASS — current student-facing terminology uses Self-Audit and Mission 3 Individual Evaluation Decision Challenge rather than Peer Audit / group Hearing.
+PASS — no unsupported master-case values were introduced.
+PASS — Production and real-student activation remain untouched.
+PASS WITH CONDITION — Lighthouse Accessibility 97/100; one color-contrast finding remains open.
+PASS — Lighthouse Performance 100/100 and Best Practices 100/100 in the latest controlled staging audit.
 
-## Deferred until human-visible preview exists
-HOLD — viewport visual inspection
-HOLD — actual contrast measurement against rendered theme
-HOLD — responsive Evidence Board behavior
-HOLD — Lighthouse accessibility/performance
-HOLD — touch-target verification
+## Runtime boundary
+This visual/content QA does not prove Neon RLS, authenticated persistence, teacher authorization, completion recomputation, certificate idempotency, or public certificate verification. Those remain Runtime Gate items.
 
 ## Release rule
-Do not change page status from draft, merge PR, redirect GitHub Pages, or touch production until Human Visual Acceptance.
+Do not merge PR #3, activate real students, issue real certificates, publish to Production, or redirect/retire GitHub Pages until the corresponding runtime/security/human gates pass.
