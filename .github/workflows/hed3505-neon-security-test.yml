@@ -1,6 +1,11 @@
 name: HED3505 Neon Security Test
+
+# NON-PRODUCTION manual runtime gate.
+# Authentication must use short-lived OTP values supplied only for the run.
+# Never store passwords, OTPs, JWTs, or session cookies in the repository.
 on:
   workflow_dispatch:
+
 jobs:
   security-test:
     runs-on: ubuntu-latest
@@ -10,26 +15,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate required secrets
+      - name: Validate ephemeral runtime inputs
         shell: bash
         env:
+          HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
+          HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
           HED3505_STUDENT_A_EMAIL: ${{ secrets.HED3505_STUDENT_A_EMAIL }}
-          HED3505_STUDENT_A_PASSWORD: ${{ secrets.HED3505_STUDENT_A_PASSWORD }}
+          HED3505_STUDENT_A_OTP: ${{ secrets.HED3505_STUDENT_A_OTP }}
           HED3505_STUDENT_B_EMAIL: ${{ secrets.HED3505_STUDENT_B_EMAIL }}
-          HED3505_STUDENT_B_PASSWORD: ${{ secrets.HED3505_STUDENT_B_PASSWORD }}
+          HED3505_STUDENT_B_OTP: ${{ secrets.HED3505_STUDENT_B_OTP }}
           HED3505_TEACHER_EMAIL: ${{ secrets.HED3505_TEACHER_EMAIL }}
-          HED3505_TEACHER_PASSWORD: ${{ secrets.HED3505_TEACHER_PASSWORD }}
+          HED3505_TEACHER_OTP: ${{ secrets.HED3505_TEACHER_OTP }}
         run: |
-          for n in HED3505_STUDENT_A_EMAIL HED3505_STUDENT_A_PASSWORD HED3505_STUDENT_B_EMAIL HED3505_STUDENT_B_PASSWORD HED3505_TEACHER_EMAIL HED3505_TEACHER_PASSWORD; do
-            test -n "${!n}" || { echo "::error::Missing required GitHub Actions secret: $n"; exit 1; }
+          for n in HED3505_NEON_AUTH_URL HED3505_NEON_DATA_API_URL HED3505_STUDENT_A_EMAIL HED3505_STUDENT_A_OTP HED3505_STUDENT_B_EMAIL HED3505_STUDENT_B_OTP HED3505_TEACHER_EMAIL HED3505_TEACHER_OTP; do
+            test -n "${!n}" || { echo "::error::Missing required ephemeral runtime input: $n"; exit 1; }
           done
       - name: Run synthetic Auth/RLS matrix
         env:
           HED3505_STAGING_ORIGIN: https://staging.kengkasem.com
+          HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
+          HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
           HED3505_STUDENT_A_EMAIL: ${{ secrets.HED3505_STUDENT_A_EMAIL }}
-          HED3505_STUDENT_A_PASSWORD: ${{ secrets.HED3505_STUDENT_A_PASSWORD }}
+          HED3505_STUDENT_A_OTP: ${{ secrets.HED3505_STUDENT_A_OTP }}
           HED3505_STUDENT_B_EMAIL: ${{ secrets.HED3505_STUDENT_B_EMAIL }}
-          HED3505_STUDENT_B_PASSWORD: ${{ secrets.HED3505_STUDENT_B_PASSWORD }}
+          HED3505_STUDENT_B_OTP: ${{ secrets.HED3505_STUDENT_B_OTP }}
           HED3505_TEACHER_EMAIL: ${{ secrets.HED3505_TEACHER_EMAIL }}
-          HED3505_TEACHER_PASSWORD: ${{ secrets.HED3505_TEACHER_PASSWORD }}
+          HED3505_TEACHER_OTP: ${{ secrets.HED3505_TEACHER_OTP }}
         run: node tests/neon/hed3505-auth-rbac.mjs
