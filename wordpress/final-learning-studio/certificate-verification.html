@@ -1,0 +1,51 @@
+<section class="hed3505-certificate-verify" aria-labelledby="certificate-verify-title">
+  <p class="eyebrow">HED3505 · CERTIFICATE VERIFICATION</p>
+  <h2 id="certificate-verify-title">ตรวจสอบใบรับรองการสำเร็จกิจกรรมการเรียนรู้</h2>
+  <p>กรอกรหัสใบรับรองจากใบประกาศ ระบบจะแสดงเฉพาะข้อมูลขั้นต่ำที่ใช้ยืนยันความถูกต้อง และไม่แสดงคะแนน คำตอบ อีเมล หรือประวัติการทำกิจกรรม</p>
+  <form id="hed3505-verify-form">
+    <label for="hed3505-certificate-code">Certificate ID</label>
+    <input id="hed3505-certificate-code" name="certificate_code" type="text" inputmode="text" autocomplete="off" maxlength="80" required aria-describedby="hed3505-code-help">
+    <small id="hed3505-code-help">ใช้รหัสที่ปรากฏบนใบรับรองหรือเปิดจาก QR verification link</small>
+    <button type="submit">ตรวจสอบ</button>
+  </form>
+  <div id="hed3505-verify-result" role="status" aria-live="polite"></div>
+</section>
+<script>
+(() => {
+  const form = document.getElementById('hed3505-verify-form');
+  const result = document.getElementById('hed3505-verify-result');
+  if (!form || !result) return;
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const code = document.getElementById('hed3505-certificate-code').value.trim();
+    if (!/^[A-Za-z0-9_-]{8,80}$/.test(code)) {
+      result.textContent = 'รูปแบบรหัสใบรับรองไม่ถูกต้อง';
+      return;
+    }
+    result.textContent = 'กำลังตรวจสอบ…';
+    // Integration contract: window.HED3505Neon.verifyCertificate(code)
+    // must call only the privacy-minimal verification function/view, never student tables.
+    if (!window.HED3505Neon || typeof window.HED3505Neon.verifyCertificate !== 'function') {
+      result.textContent = 'ระบบตรวจสอบยังอยู่ในโหมดทดสอบและยังไม่เปิดใช้งานกับนักศึกษาจริง';
+      return;
+    }
+    try {
+      const cert = await window.HED3505Neon.verifyCertificate(code);
+      if (!cert) { result.textContent = 'NOT FOUND — ไม่พบใบรับรองตามรหัสนี้'; return; }
+      const wrap = document.createElement('div');
+      const fields = [
+        ['สถานะ', cert.status], ['ใบรับรอง', cert.certificate_title],
+        ['ชื่อ', cert.learner_display_name], ['รายวิชา', cert.course],
+        ['วันที่สำเร็จ', cert.completion_date], ['ผู้สอน', cert.instructor],
+        ['รุ่นเอกสาร', cert.certificate_version]
+      ];
+      fields.forEach(([label, value]) => {
+        const p = document.createElement('p');
+        const strong = document.createElement('strong'); strong.textContent = label + ': ';
+        p.appendChild(strong); p.appendChild(document.createTextNode(value || '—')); wrap.appendChild(p);
+      });
+      result.replaceChildren(wrap);
+    } catch (_) { result.textContent = 'ไม่สามารถตรวจสอบได้ในขณะนี้ กรุณาลองใหม่ภายหลัง'; }
+  });
+})();
+</script>
