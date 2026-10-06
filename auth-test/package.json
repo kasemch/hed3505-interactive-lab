@@ -6,6 +6,8 @@
     "check": "node --check src/auth.js && node --check src/main.js"
   },
   "dependencies": {
-    "@neondatabase/neon-js": "latest"
+    "@neondatabase/neon-js": "latest",
+    "react": "latest",
+    "react-dom": "latest"
   }
 }
