@@ -26,20 +26,49 @@ jobs:
             "docs/PREVIEW-BOUNDARY.md"
             "tests/contracts/hed3505-r3-r10-contract.mjs"
             "docs/governance/HED3505-R3-R10-READINESS.md"
+            "auth-test/index.html"
+            "auth-test/package.json"
+            "auth-test/vite.config.js"
+            "auth-test/src/auth.js"
+            "auth-test/src/main.js"
           )
           for f in "${required[@]}"; do
             test -f "$f" || { echo "Missing required file: $f"; exit 1; }
           done
-          echo "PASS: required core, readiness contract, and isolated preview files exist."
+          echo "PASS: required core, readiness contract, preview, and R2 auth-build files exist."
 
       - name: Validate JavaScript syntax
         run: |
           node --check app.js
           node --check docs/app.js
           node --check tests/contracts/hed3505-r3-r10-contract.mjs
+          node --check auth-test/src/auth.js
+          node --check auth-test/src/main.js
+          node --check auth-test/vite.config.js
 
       - name: Enforce R3-R10 reversible readiness contract
         run: node tests/contracts/hed3505-r3-r10-contract.mjs
+
+      - name: R2 auth source security guard
+        shell: bash
+        run: |
+          set -e
+          if grep -R -E 'br-hidden-dream-b3jh4lgz|password[[:space:]]*=|JWT[[:space:]]*=|OTP[[:space:]]*=' auth-test --exclude-dir=node_modules; then
+            echo "FAIL: forbidden production identifier or credential-like assignment found in R2 auth source."
+            exit 1
+          fi
+          grep -q "Refusing to fall back to production" auth-test/src/auth.js
+          echo "PASS: R2 auth source is fail-closed and contains no forbidden production branch identifier."
+
+      - name: Build isolated R2 auth UI
+        working-directory: auth-test
+        run: |
+          npm install
+          npm run check
+          npm run build
+          test -f dist/index.html
+          test -d dist/assets
+          echo "PASS: isolated R2 auth UI built successfully."
 
       - name: Check five module labels
         shell: bash
