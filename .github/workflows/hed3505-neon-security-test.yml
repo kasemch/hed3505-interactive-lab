@@ -1,7 +1,7 @@
 name: HED3505 Neon Controlled Runtime Gate
 
 # NON-PRODUCTION ONLY.
-# Automatic PR runs execute PRE-FLIGHT ONLY: endpoint guardrails + anonymous-deny diagnostics.
+# PR runs execute preflight + credential-free fixture contract checks.
 # Authenticated RLS remains explicit workflow_dispatch and requires ephemeral credentials.
 # Never print or persist passwords, OTPs, JWTs, session cookies, database URLs, or response bodies.
 
@@ -77,97 +77,65 @@ jobs:
         shell: bash
         run: |
           probe() {
-            local label="$1"
-            shift
+            local label="$1"; shift
             local tmp status code message normalized
             tmp=$(mktemp)
             status=$(curl --silent --show-error --output "$tmp" --write-out '%{http_code}' "$@")
-
             code=$(python3 - "$tmp" <<'PY'
           import json, sys
           try:
-              with open(sys.argv[1], encoding='utf-8') as f:
-                  body = json.load(f)
-              value = body.get('code') or body.get('error') or body.get('error_code') or ''
-              print(str(value)[:80].replace('\n', ' ').replace('\r', ' '))
-          except Exception:
-              print('')
+              with open(sys.argv[1], encoding='utf-8') as f: body=json.load(f)
+              print(str(body.get('code') or body.get('error') or body.get('error_code') or '')[:80].replace('\n',' ').replace('\r',' '))
+          except Exception: print('')
           PY
             )
             message=$(python3 - "$tmp" <<'PY'
           import json, re, sys
           try:
-              with open(sys.argv[1], encoding='utf-8') as f:
-                  body = json.load(f)
-              value = str(body.get('message') or body.get('error_description') or '')
-              value = re.sub(r'https?://\S+', '[url-redacted]', value)
-              value = re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '[email-redacted]', value)
-              print(value[:180].replace('\n', ' ').replace('\r', ' '))
-          except Exception:
-              print('')
+              with open(sys.argv[1], encoding='utf-8') as f: body=json.load(f)
+              value=str(body.get('message') or body.get('error_description') or '')
+              value=re.sub(r'https?://\S+','[url-redacted]',value)
+              value=re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}','[email-redacted]',value)
+              print(value[:180].replace('\n',' ').replace('\r',' '))
+          except Exception: print('')
           PY
             )
             rm -f "$tmp"
-
-            if [[ -n "$code" || -n "$message" ]]; then
-              echo "$label: HTTP $status; error_code=${code:-none}; message=${message:-none}"
-            else
-              echo "$label: HTTP $status; structured_error=unavailable"
-            fi
-
+            if [[ -n "$code" || -n "$message" ]]; then echo "$label: HTTP $status; error_code=${code:-none}; message=${message:-none}"; else echo "$label: HTTP $status; structured_error=unavailable"; fi
             case "$status" in
-              401|403)
-                echo "$label: DENY (standard HTTP auth denial)"
-                return 0
-                ;;
+              401|403) echo "$label: DENY (standard HTTP auth denial)"; return 0;;
               400)
                 normalized=$(printf '%s' "$message" | tr '[:upper:]' '[:lower:]')
-                if [[ "$normalized" == *"missing authentication credentials"* && "$normalized" == *"authorization bearer token"* && "$normalized" == *"jwt"* ]]; then
-                  echo "$label: DENY (Neon missing-JWT authentication denial)"
-                  return 0
-                fi
-                echo "$label: HTTP_400_NOT_RECOGNIZED_AS_AUTH_DENIAL"
-                return 2
-                ;;
-              404|405|406|415|422)
-                echo "$label: REQUEST_CONTRACT_REJECTED (HTTP $status)"
-                return 2
-                ;;
-              2??)
-                echo "::error::$label unexpectedly returned HTTP $status; anonymous access cannot be accepted."
-                return 1
-                ;;
-              *)
-                echo "$label: OTHER_HTTP_$status"
-                return 3
-                ;;
+                if [[ "$normalized" == *"missing authentication credentials"* && "$normalized" == *"authorization bearer token"* && "$normalized" == *"jwt"* ]]; then echo "$label: DENY (Neon missing-JWT authentication denial)"; return 0; fi
+                return 2;;
+              2??) echo "::error::$label unexpectedly returned HTTP $status"; return 1;;
+              *) return 3;;
             esac
           }
-
           set +e
-          probe 'schema-header' \
-            --header 'accept-profile: hed3505' \
-            "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"
-          schema_rc=$?
-          probe 'default-profile-control' \
-            "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"
-          control_rc=$?
+          probe 'schema-header' --header 'accept-profile: hed3505' "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"; schema_rc=$?
+          probe 'default-profile-control' "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"; control_rc=$?
           set -e
+          if [[ $schema_rc -eq 0 && $control_rc -eq 0 ]]; then echo 'Anonymous deny: PASS'; exit 0; fi
+          echo '::error::Anonymous deny remains unverified.'; exit 1
 
-          if [[ $schema_rc -eq 0 && $control_rc -eq 0 ]]; then
-            echo 'Anonymous deny: PASS'
-            exit 0
-          fi
-          if [[ $schema_rc -eq 1 || $control_rc -eq 1 ]]; then
-            echo '::error::Anonymous request returned a successful 2xx response. Security review required.'
-            exit 1
-          fi
-          echo '::error::Anonymous deny remains unverified: all expected anonymous probes must produce a recognized authentication denial.'
-          exit 1
+  fixture-contract:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate synthetic fixture contract
+        env:
+          HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
+        run: node tests/neon/hed3505-fixture-contract.mjs
 
   authenticated-rls:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.gate == 'authenticated-rls' }}
-    needs: preflight
+    needs: [preflight, fixture-contract]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
