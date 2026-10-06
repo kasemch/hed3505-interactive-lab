@@ -3,11 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check src/auth.js && node --check src/main.js"
+    "check": "node --check src/auth.js && node --check src/main.js",
+    "build": "vite build"
   },
   "dependencies": {
     "@neondatabase/neon-js": "latest",
     "react": "latest",
     "react-dom": "latest"
+  },
+  "devDependencies": {
+    "vite": "latest"
   }
 }
