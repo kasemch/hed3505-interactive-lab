@@ -1,8 +1,8 @@
 name: HED3505 Neon Controlled Runtime Gate
 
-# NON-PRODUCTION ONLY.
-# Manual runtime gate. Never print or persist passwords, OTPs, JWTs, session cookies,
-# database URLs, or response bodies.
+# NON-PRODUCTION ONLY. Authenticated checks use pre-verified synthetic
+# email/password accounts on the isolated HED3505 sandbox branch.
+# Never print or persist passwords, JWTs, session cookies, or response bodies.
 
 on:
   workflow_dispatch:
@@ -19,61 +19,78 @@ on:
         description: 'Type HED3505-SANDBOX to authorize non-production network tests'
         required: true
         type: string
+      confirm_branch_id:
+        description: 'Type the approved sandbox branch ID exactly'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: hed3505-neon-controlled-runtime-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
-  HED3505_EXPECTED_STAGING_ORIGIN: https://staging.kengkasem.com
   HED3505_EXPECTED_PROJECT_ID: winter-sun-55259147
   HED3505_EXPECTED_SANDBOX_BRANCH_ID: br-steep-hall-b3nm8s2p
   HED3505_EXPECTED_DATABASE: neondb
   HED3505_FORBIDDEN_PRODUCTION_BRANCH_ID: br-hidden-dream-b3jh4lgz
+  HED3505_STAGING_ORIGIN: https://staging.kengkasem.com
+  HED3505_NEON_AUTH_URL: https://ep-broad-haze-b3jbuo1d.neonauth.c-4.ap-southeast-1.aws.neon.tech/neondb/auth
+  HED3505_NEON_DATA_API_URL: https://ep-broad-haze-b3jbuo1d.apirest.c-4.ap-southeast-1.aws.neon.tech/neondb/rest/v1
 
 jobs:
   preflight:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    env:
-      HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
-      HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
     steps:
-      - name: Validate sandbox authorization
+      - name: Validate sandbox authorization and exact target
         shell: bash
+        env:
+          CONFIRM_SANDBOX: ${{ inputs.confirm_sandbox }}
+          CONFIRM_BRANCH_ID: ${{ inputs.confirm_branch_id }}
         run: |
-          test '${{ inputs.confirm_sandbox }}' = 'HED3505-SANDBOX' || {
+          test "$CONFIRM_SANDBOX" = 'HED3505-SANDBOX' || {
             echo '::error::Sandbox confirmation mismatch; refusing runtime test.'
             exit 1
           }
-      - name: Validate endpoint configuration without printing secrets
-        shell: bash
-        run: |
-          test -n "$HED3505_NEON_AUTH_URL" || { echo '::error::Missing HED3505_NEON_AUTH_URL'; exit 1; }
-          test -n "$HED3505_NEON_DATA_API_URL" || { echo '::error::Missing HED3505_NEON_DATA_API_URL'; exit 1; }
+          test "$CONFIRM_BRANCH_ID" = "$HED3505_EXPECTED_SANDBOX_BRANCH_ID" || {
+            echo '::error::Sandbox branch confirmation mismatch; refusing runtime test.'
+            exit 1
+          }
+          test "$HED3505_EXPECTED_DATABASE" = 'neondb' || {
+            echo '::error::Unexpected database target; refusing runtime test.'
+            exit 1
+          }
           case "$HED3505_NEON_AUTH_URL" in https://*) ;; *) echo '::error::Auth endpoint must use HTTPS'; exit 1;; esac
           case "$HED3505_NEON_DATA_API_URL" in https://*) ;; *) echo '::error::Data API endpoint must use HTTPS'; exit 1;; esac
           if [[ "$HED3505_NEON_AUTH_URL $HED3505_NEON_DATA_API_URL" == *"$HED3505_FORBIDDEN_PRODUCTION_BRANCH_ID"* ]]; then
             echo '::error::Production branch identifier detected; refusing runtime test.'
             exit 1
           fi
-          echo 'Endpoint presence/HTTPS/production-branch guard: PASS'
-      - name: Anonymous deny probe
+          echo 'Target: approved non-production sandbox; endpoint and branch guards: PASS'
+
+      - name: Verify anonymous deny on the sandbox Data API
         shell: bash
         run: |
           probe() {
-            local label="$1"; shift
+            local label="$1"
+            shift
             local tmp status message normalized
             tmp=$(mktemp)
             status=$(curl --silent --show-error --output "$tmp" --write-out '%{http_code}' "$@")
             message=$(python3 - "$tmp" <<'PY'
           import json, re, sys
           try:
-              with open(sys.argv[1], encoding='utf-8') as f: body=json.load(f)
-              value=str(body.get('message') or body.get('error_description') or '')
-              value=re.sub(r'https?://\S+', '[url-redacted]', value)
-              value=re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '[email-redacted]', value)
-              print(value[:180].replace('\n',' ').replace('\r',' '))
-          except Exception: print('')
+              with open(sys.argv[1], encoding='utf-8') as f:
+                  body = json.load(f)
+              value = str(body.get('message') or body.get('error_description') or '')
+              value = re.sub(r'https?://\S+', '[url-redacted]', value)
+              value = re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '[email-redacted]', value)
+              print(value[:180].replace('\n', ' ').replace('\r', ' '))
+          except Exception:
+              print('')
           PY
             )
             rm -f "$tmp"
@@ -88,10 +105,13 @@ jobs:
             esac
           }
           set +e
-          probe schema-header --header 'accept-profile: hed3505' "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"; a=$?
-          probe default-profile "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"; b=$?
+          probe schema-header --header 'accept-profile: hed3505' "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"; schema_rc=$?
+          probe default-profile "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"; default_rc=$?
           set -e
-          [[ $a -eq 0 && $b -eq 0 ]] || { echo '::error::Anonymous deny not verified'; exit 1; }
+          [[ $schema_rc -eq 0 && $default_rc -eq 0 ]] || {
+            echo '::error::Anonymous deny is not verified on the approved sandbox.'
+            exit 1
+          }
           echo 'Anonymous deny: PASS'
 
   authenticated-rls:
@@ -102,35 +122,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: hed3505-wordpress-final-learning-studio-01
+          ref: hed3505-r2-runtime-runner-main-01
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate ephemeral authenticated inputs without printing values
+      - name: Validate ephemeral synthetic account inputs without printing values
         shell: bash
         env:
-          HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
-          HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
-          HED3505_STUDENT_A_EMAIL: ${{ secrets.HED3505_STUDENT_A_EMAIL }}
-          HED3505_STUDENT_A_OTP: ${{ secrets.HED3505_STUDENT_A_OTP }}
-          HED3505_STUDENT_B_EMAIL: ${{ secrets.HED3505_STUDENT_B_EMAIL }}
-          HED3505_STUDENT_B_OTP: ${{ secrets.HED3505_STUDENT_B_OTP }}
-          HED3505_TEACHER_EMAIL: ${{ secrets.HED3505_TEACHER_EMAIL }}
-          HED3505_TEACHER_OTP: ${{ secrets.HED3505_TEACHER_OTP }}
+          HED3505_SYNTH_STUDENT_A_EMAIL: ${{ secrets.HED3505_SYNTH_STUDENT_A_EMAIL }}
+          HED3505_SYNTH_STUDENT_A_PASSWORD: ${{ secrets.HED3505_SYNTH_STUDENT_A_PASSWORD }}
+          HED3505_SYNTH_STUDENT_B_EMAIL: ${{ secrets.HED3505_SYNTH_STUDENT_B_EMAIL }}
+          HED3505_SYNTH_STUDENT_B_PASSWORD: ${{ secrets.HED3505_SYNTH_STUDENT_B_PASSWORD }}
+          HED3505_SYNTH_TEACHER_EMAIL: ${{ secrets.HED3505_SYNTH_TEACHER_EMAIL }}
+          HED3505_SYNTH_TEACHER_PASSWORD: ${{ secrets.HED3505_SYNTH_TEACHER_PASSWORD }}
         run: |
-          for n in HED3505_NEON_AUTH_URL HED3505_NEON_DATA_API_URL HED3505_STUDENT_A_EMAIL HED3505_STUDENT_A_OTP HED3505_STUDENT_B_EMAIL HED3505_STUDENT_B_OTP HED3505_TEACHER_EMAIL HED3505_TEACHER_OTP; do
-            test -n "${!n}" || { echo "::error::Missing required ephemeral runtime input: $n"; exit 1; }
+          for name in HED3505_SYNTH_STUDENT_A_EMAIL HED3505_SYNTH_STUDENT_A_PASSWORD HED3505_SYNTH_STUDENT_B_EMAIL HED3505_SYNTH_STUDENT_B_PASSWORD HED3505_SYNTH_TEACHER_EMAIL HED3505_SYNTH_TEACHER_PASSWORD; do
+            test -n "${!name}" || { echo "::error::Missing required synthetic test secret: $name"; exit 1; }
           done
-          echo 'Ephemeral input presence: PASS'
-      - name: Run synthetic Auth/RLS matrix
+          echo 'Synthetic test account secret presence: PASS'
+      - name: Run synthetic Auth, RLS isolation, and persistence matrix
         env:
-          HED3505_STAGING_ORIGIN: https://staging.kengkasem.com
-          HED3505_NEON_AUTH_URL: ${{ secrets.HED3505_NEON_AUTH_URL }}
-          HED3505_NEON_DATA_API_URL: ${{ secrets.HED3505_NEON_DATA_API_URL }}
-          HED3505_STUDENT_A_EMAIL: ${{ secrets.HED3505_STUDENT_A_EMAIL }}
-          HED3505_STUDENT_A_OTP: ${{ secrets.HED3505_STUDENT_A_OTP }}
-          HED3505_STUDENT_B_EMAIL: ${{ secrets.HED3505_STUDENT_B_EMAIL }}
-          HED3505_STUDENT_B_OTP: ${{ secrets.HED3505_STUDENT_B_OTP }}
-          HED3505_TEACHER_EMAIL: ${{ secrets.HED3505_TEACHER_EMAIL }}
-          HED3505_TEACHER_OTP: ${{ secrets.HED3505_TEACHER_OTP }}
+          HED3505_TEST_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          HED3505_SYNTH_STUDENT_A_EMAIL: ${{ secrets.HED3505_SYNTH_STUDENT_A_EMAIL }}
+          HED3505_SYNTH_STUDENT_A_PASSWORD: ${{ secrets.HED3505_SYNTH_STUDENT_A_PASSWORD }}
+          HED3505_SYNTH_STUDENT_B_EMAIL: ${{ secrets.HED3505_SYNTH_STUDENT_B_EMAIL }}
+          HED3505_SYNTH_STUDENT_B_PASSWORD: ${{ secrets.HED3505_SYNTH_STUDENT_B_PASSWORD }}
+          HED3505_SYNTH_TEACHER_EMAIL: ${{ secrets.HED3505_SYNTH_TEACHER_EMAIL }}
+          HED3505_SYNTH_TEACHER_PASSWORD: ${{ secrets.HED3505_SYNTH_TEACHER_PASSWORD }}
         run: node tests/neon/hed3505-auth-rbac.mjs
