@@ -79,11 +79,10 @@ jobs:
           probe() {
             local label="$1"
             shift
-            local tmp status code message
+            local tmp status code message normalized
             tmp=$(mktemp)
             status=$(curl --silent --show-error --output "$tmp" --write-out '%{http_code}' "$@")
 
-            # Capture only a small, sanitized error classification. Never print row data or full bodies.
             code=$(python3 - "$tmp" <<'PY'
           import json, sys
           try:
@@ -118,11 +117,20 @@ jobs:
 
             case "$status" in
               401|403)
-                echo "$label: DENY"
+                echo "$label: DENY (standard HTTP auth denial)"
                 return 0
                 ;;
-              400|404|405|406|415|422)
-                echo "$label: REQUEST_CONTRACT_OR_AUTH_SEMANTICS_REVIEW"
+              400)
+                normalized=$(printf '%s' "$message" | tr '[:upper:]' '[:lower:]')
+                if [[ "$normalized" == *"missing authentication credentials"* && "$normalized" == *"authorization bearer token"* && "$normalized" == *"jwt"* ]]; then
+                  echo "$label: DENY (Neon missing-JWT authentication denial)"
+                  return 0
+                fi
+                echo "$label: HTTP_400_NOT_RECOGNIZED_AS_AUTH_DENIAL"
+                return 2
+                ;;
+              404|405|406|415|422)
+                echo "$label: REQUEST_CONTRACT_REJECTED (HTTP $status)"
                 return 2
                 ;;
               2??)
@@ -146,7 +154,7 @@ jobs:
           control_rc=$?
           set -e
 
-          if [[ $schema_rc -eq 0 || $control_rc -eq 0 ]]; then
+          if [[ $schema_rc -eq 0 && $control_rc -eq 0 ]]; then
             echo 'Anonymous deny: PASS'
             exit 0
           fi
@@ -154,7 +162,7 @@ jobs:
             echo '::error::Anonymous request returned a successful 2xx response. Security review required.'
             exit 1
           fi
-          echo '::error::Anonymous deny remains unverified; inspect sanitized Neon error semantics above.'
+          echo '::error::Anonymous deny remains unverified: all expected anonymous probes must produce a recognized authentication denial.'
           exit 1
 
   authenticated-rls:
