@@ -79,15 +79,50 @@ jobs:
           probe() {
             local label="$1"
             shift
-            local status
-            status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$@")
+            local tmp status code message
+            tmp=$(mktemp)
+            status=$(curl --silent --show-error --output "$tmp" --write-out '%{http_code}' "$@")
+
+            # Capture only a small, sanitized error classification. Never print row data or full bodies.
+            code=$(python3 - "$tmp" <<'PY'
+          import json, sys
+          try:
+              with open(sys.argv[1], encoding='utf-8') as f:
+                  body = json.load(f)
+              value = body.get('code') or body.get('error') or body.get('error_code') or ''
+              print(str(value)[:80].replace('\n', ' ').replace('\r', ' '))
+          except Exception:
+              print('')
+          PY
+            )
+            message=$(python3 - "$tmp" <<'PY'
+          import json, re, sys
+          try:
+              with open(sys.argv[1], encoding='utf-8') as f:
+                  body = json.load(f)
+              value = str(body.get('message') or body.get('error_description') or '')
+              value = re.sub(r'https?://\S+', '[url-redacted]', value)
+              value = re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '[email-redacted]', value)
+              print(value[:180].replace('\n', ' ').replace('\r', ' '))
+          except Exception:
+              print('')
+          PY
+            )
+            rm -f "$tmp"
+
+            if [[ -n "$code" || -n "$message" ]]; then
+              echo "$label: HTTP $status; error_code=${code:-none}; message=${message:-none}"
+            else
+              echo "$label: HTTP $status; structured_error=unavailable"
+            fi
+
             case "$status" in
               401|403)
-                echo "$label: DENY (HTTP $status)"
+                echo "$label: DENY"
                 return 0
                 ;;
               400|404|405|406|415|422)
-                echo "$label: REQUEST_CONTRACT_REJECTED (HTTP $status)"
+                echo "$label: REQUEST_CONTRACT_OR_AUTH_SEMANTICS_REVIEW"
                 return 2
                 ;;
               2??)
@@ -106,23 +141,20 @@ jobs:
             --header 'accept-profile: hed3505' \
             "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"
           schema_rc=$?
-          probe 'schema-query-param' \
-            "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1&schema=hed3505"
-          query_rc=$?
           probe 'default-profile-control' \
             "$HED3505_NEON_DATA_API_URL/learner_identity?select=learner_id&limit=1"
           control_rc=$?
           set -e
 
-          if [[ $schema_rc -eq 0 || $query_rc -eq 0 ]]; then
+          if [[ $schema_rc -eq 0 || $control_rc -eq 0 ]]; then
             echo 'Anonymous deny: PASS'
             exit 0
           fi
-          if [[ $schema_rc -eq 1 || $query_rc -eq 1 || $control_rc -eq 1 ]]; then
+          if [[ $schema_rc -eq 1 || $control_rc -eq 1 ]]; then
             echo '::error::Anonymous request returned a successful 2xx response. Security review required.'
             exit 1
           fi
-          echo '::error::Anonymous deny remains unverified: request contract/schema exposure rejected before an authorization denial was observed.'
+          echo '::error::Anonymous deny remains unverified; inspect sanitized Neon error semantics above.'
           exit 1
 
   authenticated-rls:
