@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>HED3505 R2 Auth Test</title>
+</head>
+<body>
+  <main>
+    <h1>HED3505 — R2 Authentication Test</h1>
+    <p>พื้นที่ทดสอบแบบไม่ใช่ Production สำหรับยืนยัน Neon Auth session ก่อนทดสอบ RLS</p>
+    <div id="hed3505-r2-auth-root"></div>
+  </main>
+  <script>
+    // Runtime injection only. Deployment must replace this with the approved ephemeral branch Auth URL.
+    globalThis.HED3505_R2_AUTH_URL = globalThis.HED3505_R2_AUTH_URL || '';
+  </script>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
