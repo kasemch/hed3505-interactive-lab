@@ -1,0 +1,41 @@
+{
+  "fixture_version": "1.1",
+  "classification": "SYNTHETIC / SANDBOX ONLY",
+  "baseline": "HED3505 Independent Learning v3.2",
+  "M2": {
+    "objective": "ประเมินผลการดำเนินงานโปรแกรมสุขภาพในโรงเรียน",
+    "evaluation_question": "โปรแกรมบรรลุผลตามวัตถุประสงค์ที่กำหนดหรือไม่",
+    "indicator": "ตัวชี้วัดผลลัพธ์ที่สอดคล้องกับคำถามประเมิน",
+    "data_source": "ข้อมูลกรณีศึกษาโรงเรียนอรุณพัฒนา",
+    "instrument": "เครื่องมือเก็บข้อมูลที่สอดคล้องกับตัวชี้วัด",
+    "quality_check": "ตรวจความตรง ความเชื่อมั่น และคุณภาพข้อมูลก่อนตีความ",
+    "criterion": "เปรียบเทียบหลักฐานกับเกณฑ์ที่กำหนดก่อนตัดสิน",
+    "possible_decision": "COLLECT MORE EVIDENCE",
+    "self_audit": "ตรวจความสอดคล้อง Objective → Evaluation Question → Indicator → Data Source → Instrument → Criterion ด้วยตนเอง",
+    "final_revision": "ปรับสายโซ่การประเมินให้แต่ละองค์ประกอบเชื่อมโยงกัน",
+    "synthetic": true
+  },
+  "M2_MISSING_EVIDENCE": {
+    "evaluation_question": "หลักฐานที่มีเพียงพอต่อการตัดสินผลโปรแกรมหรือไม่",
+    "missing_evidence": "หลักฐานเพิ่มเติมที่ตอบคำถามประเมินโดยตรง",
+    "data_source": "แหล่งข้อมูลที่เหมาะสมกับหลักฐานที่ขาด",
+    "instrument": "เครื่องมือที่เหมาะสมกับข้อมูลเพิ่มเติม",
+    "rationale": "ลดความไม่แน่นอนของข้อสรุปและหลีกเลี่ยงการตัดสินเกินหลักฐาน",
+    "decision_improved": "ช่วยเลือกระหว่าง CONTINUE WITH MODIFICATION และ COLLECT MORE EVIDENCE",
+    "confidence": "moderate",
+    "synthetic": true
+  },
+  "M3_EVALUATION_DECISION": {
+    "evidence": "ใช้หลักฐานหลายแหล่งจากกรณีศึกษาโดยไม่สร้างข้อมูลเพิ่ม",
+    "interpretation": "แยกข้อเท็จจริงออกจากการตีความและข้อสันนิษฐาน",
+    "limitation": "หลักฐานบางตัววัดคนละมิติและไม่เพียงพอสำหรับข้อสรุปเชิงเหตุผล",
+    "criterion": "ใช้เกณฑ์ที่ระบุชัดก่อนตัดสิน",
+    "judgment": "หลักฐานยังมีข้อจำกัด จึงไม่สรุปเกินข้อมูล",
+    "recommendation": "เก็บหลักฐานเพิ่มเติมก่อนยืนยันข้อสรุป",
+    "action": "COLLECT MORE EVIDENCE",
+    "decision_code": "COLLECT_MORE_EVIDENCE",
+    "confidence": "moderate",
+    "perspective_rotation": ["Evaluator", "Evidence Auditor", "Stakeholder", "Decision Maker"],
+    "synthetic": true
+  }
+}

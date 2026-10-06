@@ -1,0 +1,110 @@
+{
+  "fixture_version": "HED3505-v3.2-SYNTHETIC-01",
+  "classification": "SYNTHETIC TEST DATA ONLY — NO REAL STUDENTS",
+  "generated_for": "WordPress Staging + Neon Sandbox E2E QA",
+  "students": [
+    {
+      "learner_key": "SYN-A",
+      "display_name": "นักศึกษาทดสอบ A",
+      "auth_subject": "synthetic-auth-a",
+      "eligibility": "eligible",
+      "progress": {
+        "mission_1": {"submitted": true, "feedback_viewed": true, "revised": true, "completed": true},
+        "mission_2": {"submitted": true, "feedback_viewed": true, "revised": true, "completed": true},
+        "mission_3": {"submitted": true, "feedback_viewed": true, "revised": true, "completed": true},
+        "final_review_completed": true,
+        "practice_check_completed": true
+      },
+      "expected_completion": "COMPLETE",
+      "expected_certificate": "ELIGIBLE"
+    },
+    {
+      "learner_key": "SYN-B",
+      "display_name": "นักศึกษาทดสอบ B",
+      "auth_subject": "synthetic-auth-b",
+      "eligibility": "eligible",
+      "progress": {
+        "mission_1": {"submitted": true, "feedback_viewed": true, "revised": true, "completed": true},
+        "mission_2": {"submitted": true, "feedback_viewed": true, "revised": false, "completed": false},
+        "mission_3": {"submitted": false, "feedback_viewed": false, "revised": false, "completed": false},
+        "final_review_completed": false,
+        "practice_check_completed": false
+      },
+      "expected_completion": "IN_PROGRESS",
+      "expected_certificate": "LOCKED"
+    },
+    {
+      "learner_key": "SYN-C",
+      "display_name": "นักศึกษาทดสอบ C",
+      "auth_subject": "synthetic-auth-c",
+      "eligibility": "eligible",
+      "progress": {
+        "mission_1": {"submitted": false, "feedback_viewed": false, "revised": false, "completed": false},
+        "mission_2": {"submitted": false, "feedback_viewed": false, "revised": false, "completed": false},
+        "mission_3": {"submitted": false, "feedback_viewed": false, "revised": false, "completed": false},
+        "final_review_completed": false,
+        "practice_check_completed": false
+      },
+      "expected_completion": "NOT_STARTED",
+      "expected_certificate": "LOCKED"
+    },
+    {
+      "learner_key": "SYN-X",
+      "display_name": "บัญชีทดสอบนอกกลุ่มเรียน",
+      "auth_subject": "synthetic-auth-x",
+      "eligibility": "not_enrolled",
+      "progress": {},
+      "expected_completion": "DENIED",
+      "expected_certificate": "DENIED"
+    }
+  ],
+  "mission_payloads": {
+    "mission_1": {
+      "activity": "Evidence Detective",
+      "synthetic_response": {
+        "fact": "อัตราผ่านความรู้ CPR และอัตราผ่านการปฏิบัติ CPR เป็นข้อมูลคนละมิติ",
+        "interpretation": "ผลด้านความรู้สูงกว่าด้านการปฏิบัติในข้อมูลที่รายงาน",
+        "limitation": "ยังไม่ทราบรายละเอียดเครื่องมือ เกณฑ์ และกระบวนการเก็บข้อมูล",
+        "overclaim_to_reject": "โปรแกรม CPR ล้มเหลวแน่นอน"
+      }
+    },
+    "mission_2": {
+      "activity": "Build & Challenge the Evaluation",
+      "synthetic_response": {
+        "evaluation_question": "ผู้เข้าร่วมสามารถแสดงทักษะตามเกณฑ์ที่กำหนดได้เพียงใดหลังการดำเนินโปรแกรม",
+        "indicator": "สัดส่วนผู้เข้าร่วมที่ผ่านเกณฑ์การประเมินทักษะ",
+        "data_source": "การประเมินการปฏิบัติ",
+        "instrument": "แบบประเมินการปฏิบัติที่มีเกณฑ์ให้คะแนนชัดเจน",
+        "quality_check": "ตรวจหลักฐานความตรงของเนื้อหา ความสม่ำเสมอของการให้คะแนน และขั้นตอนการเก็บข้อมูล",
+        "criterion": "ต้องกำหนดเกณฑ์ก่อนตัดสินผล",
+        "missing_evidence": "รายละเอียดเกณฑ์ผ่านและคุณภาพของการวัด"
+      }
+    },
+    "mission_3": {
+      "activity": "Individual Evaluation Decision Challenge",
+      "synthetic_response": {
+        "decision": "COLLECT MORE EVIDENCE",
+        "evidence": "มีข้อมูลหลายตัวชี้วัด แต่ข้อมูลที่มีไม่เพียงพอสำหรับข้อสรุปเชิงสาเหตุ",
+        "interpretation": "หลักฐานสะท้อนผลหลายมิติและต้องพิจารณาคุณภาพของการวัด",
+        "criterion": "การตัดสินต้องอิงเกณฑ์ที่กำหนดไว้ล่วงหน้า",
+        "judgment": "ยังไม่ควรสรุปคุณค่าของโปรแกรมในภาพรวมจากข้อมูลชุดนี้เพียงอย่างเดียว",
+        "recommendation": "เก็บหลักฐานที่ตอบคำถามประเมินโดยตรงและตรวจคุณภาพเครื่องมือ",
+        "action": "วางแผนเก็บข้อมูลเพิ่มเติมแล้วประเมินซ้ำ",
+        "limitation": "ไม่มีข้อมูลเพียงพอสำหรับอ้างเหตุและผล"
+      }
+    }
+  },
+  "certificates": [
+    {"public_code": "HED3505-SYN-VALID-001", "learner_key": "SYN-A", "status": "VALID", "expected_public_fields_only": true},
+    {"public_code": "HED3505-SYN-REVOKED-001", "learner_key": "SYN-A", "status": "REVOKED", "expected_public_fields_only": true},
+    {"public_code": "HED3505-SYN-NOTFOUND-001", "learner_key": null, "status": "NOT_FOUND", "expected_public_fields_only": true}
+  ],
+  "security_expectations": [
+    "SYN-A cannot read SYN-B answers or progress",
+    "SYN-B cannot read SYN-A certificate-internal records",
+    "SYN-X cannot create eligible learning evidence",
+    "Teacher role can read course roster/progress only when course_staff authorized",
+    "Anonymous verification sees only approved certificate projection",
+    "No fixture contains real email, student id, password, OTP or real auth id"
+  ]
+}

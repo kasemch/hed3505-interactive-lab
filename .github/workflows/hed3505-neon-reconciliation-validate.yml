@@ -1,0 +1,68 @@
+name: HED3505 Neon Reconciliation Static Gate
+
+# NON-PRODUCTION ONLY.
+# Static validation only: this workflow does NOT connect to Neon and does NOT execute SQL.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'database/neon/hed3505_sandbox_reconciliation_v1_1.sql'
+      - 'docs/architecture/HED3505-SANDBOX-SCHEMA-RECONCILIATION-v1.1.md'
+      - '.github/workflows/hed3505-neon-reconciliation-validate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-reconciliation-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate fail-closed reconciliation contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          f='database/neon/hed3505_sandbox_reconciliation_v1_1.sql'
+          test -f "$f"
+
+          for required in \
+            'BEGIN;' \
+            'COMMIT;' \
+            "expected schema hed3505 is missing" \
+            'learner_identity' \
+            'activity_attempt' \
+            'group_hearing' \
+            'assessment' \
+            'audit_event' \
+            'course_staff' \
+            'ENABLE ROW LEVEL SECURITY' \
+            'REVOKE ALL ON SCHEMA hed3505 FROM PUBLIC' \
+            'REVOKE ALL ON ALL TABLES IN SCHEMA hed3505 FROM PUBLIC'; do
+            grep -Fq "$required" "$f" || { echo "::error::Missing required reconciliation guard: $required"; exit 1; }
+          done
+
+          if grep -Eiq 'DROP[[:space:]]+(TABLE|SCHEMA)|TRUNCATE|DISABLE[[:space:]]+ROW[[:space:]]+LEVEL[[:space:]]+SECURITY|USING[[:space:]]*\([[:space:]]*true[[:space:]]*\)|WITH[[:space:]]+CHECK[[:space:]]*\([[:space:]]*true[[:space:]]*\)' "$f"; then
+            echo '::error::Destructive or broad RLS construct detected.'
+            exit 1
+          fi
+
+          if grep -Eiq 'GRANT[[:space:]].*[[:space:]]TO[[:space:]]+(PUBLIC|authenticated|anon)' "$f"; then
+            echo '::error::Privilege widening detected in reconciliation migration.'
+            exit 1
+          fi
+
+          echo 'Static reconciliation safety contract: PASS'
+      - name: Verify runtime target identifiers are documentation-only and production is not a SQL target
+        shell: bash
+        run: |
+          set -euo pipefail
+          f='database/neon/hed3505_sandbox_reconciliation_v1_1.sql'
+          grep -Fq 'br-steep-hall-b3nm8s2p' "$f"
+          if grep -Fq 'br-hidden-dream-b3jh4lgz' "$f"; then
+            echo '::error::Production branch identifier must not appear in executable reconciliation SQL.'
+            exit 1
+          fi
+          echo 'Target-boundary static check: PASS'
