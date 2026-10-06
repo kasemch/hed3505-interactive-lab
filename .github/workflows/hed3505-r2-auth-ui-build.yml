@@ -1,0 +1,44 @@
+name: HED3505 R2 Auth UI Build Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'auth-test/**'
+      - '.github/workflows/hed3505-r2-auth-ui-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-auth-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: auth-test/package-lock.json
+      - name: Security source guard
+        shell: bash
+        run: |
+          ! grep -R -E 'br-hidden-dream-b3jh4lgz|password[[:space:]]*=|JWT[[:space:]]*=|OTP[[:space:]]*=' auth-test --exclude-dir=node_modules
+          echo 'R2 source security guard: PASS'
+      - name: Install dependencies
+        working-directory: auth-test
+        run: npm install --package-lock-only && npm ci
+      - name: Syntax check
+        working-directory: auth-test
+        run: npm run check
+      - name: Build isolated auth surface
+        working-directory: auth-test
+        run: npm run build
+      - name: Verify build output
+        shell: bash
+        run: |
+          test -f auth-test/dist/index.html
+          test -d auth-test/dist/assets
+          echo 'R2 auth UI build: PASS'
