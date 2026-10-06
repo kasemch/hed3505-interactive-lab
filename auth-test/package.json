@@ -1,0 +1,11 @@
+{
+  "name": "hed3505-r2-neon-auth-test",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/auth.js && node --check src/main.js"
+  },
+  "dependencies": {
+    "@neondatabase/neon-js": "latest"
+  }
+}
