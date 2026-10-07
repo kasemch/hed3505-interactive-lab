@@ -42,4 +42,34 @@ for(const key of ['evidence','interpretation','limitation','criterion','judgment
 const allowedDecisionCodes=new Set(['CONTINUE','CONTINUE_WITH_MODIFICATION','COLLECT_MORE_EVIDENCE','DISCONTINUE']);
 if(!allowedDecisionCodes.has(m3.decision_code)){console.error('R3-R10 fixture contract: invalid Mission 3 decision_code');process.exit(1)}
 if(!Array.isArray(m3.perspective_rotation) || m3.perspective_rotation.length !== 4){console.error('R3-R10 fixture contract: Mission 3 perspective rotation must contain four roles');process.exit(1)}
+
+const configPath='wordpress/final-learning-studio/v3.2-independent-learning-config.js';
+if(!fs.existsSync(configPath)){console.error('R3-R10 lifecycle contract: v3.2 independent-learning config missing');process.exit(1)}
+const configText=fs.readFileSync(configPath,'utf8');
+const lifecycleNeedles=[
+  'mission-1','classify-evidence','view-guided-feedback','revise','reflect',
+  'mission-2','build-evaluation-chain','self-audit','missing-evidence','written-defense',
+  'mission-3','audit-evidence','identify-unknowns','set-criterion','write-defense','view-defensible-answer',
+  'mission-1-completed','mission-2-completed','mission-3-completed',
+  'required-feedback-viewed','required-revision-completed','final-review-completed','practice-check-completed'
+];
+for(const needle of lifecycleNeedles){
+  if(!configText.includes(needle)){console.error(`R3-R10 lifecycle contract: ${needle} missing from v3.2 config`);process.exit(1)}
+}
+for(const decision of ['CONTINUE','CONTINUE WITH MODIFICATION','COLLECT MORE EVIDENCE','DISCONTINUE']){
+  if(!configText.includes(decision)){console.error(`R3-R10 lifecycle contract: canonical decision ${decision} missing`);process.exit(1)}
+}
+for(const role of ['Evaluator','Evidence Auditor','Stakeholder','Decision Maker']){
+  if(!configText.includes(role)){console.error(`R3-R10 lifecycle contract: Mission 3 role ${role} missing`);process.exit(1)}
+}
+if(!configText.includes("eligibilitySource: 'server-authoritative'")){
+  console.error('R3-R10 certificate contract: eligibility must remain server-authoritative');process.exit(1);
+}
+if(!configText.includes("verification: 'opaque-certificate-id-only'")){
+  console.error('R3-R10 certificate contract: public verification must use opaque certificate id only');process.exit(1);
+}
+for(const forbidden of ['email','auth_id','learner_id','score','answers','attempt_history','internal_ids']){
+  if(!configText.includes(`'${forbidden}'`)){console.error(`R3-R10 certificate privacy contract: forbidden public field ${forbidden} missing`);process.exit(1)}
+}
+console.log('R3-R10 lifecycle + completion + certificate authority contract: PASS');
 console.log('R3-R10 reversible preparation + synthetic evidence contract: PASS');
