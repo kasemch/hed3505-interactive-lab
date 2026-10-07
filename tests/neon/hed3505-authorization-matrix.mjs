@@ -29,6 +29,7 @@ function cookies(headers) {
   return raw.map(v => v.split(';', 1)[0]).join('; ');
 }
 function assert(condition, message) { if (!condition) throw new Error(message); }
+function eq(value) { return encodeURIComponent(`eq.${value}`); }
 async function signIn(email, otp) {
   const login = await jsonFetch(`${AUTH}/sign-in/email-otp`, {
     method: 'POST', headers: { 'content-type': 'application/json', origin: ORIGIN },
@@ -68,19 +69,31 @@ assert(aOwn.ok && Array.isArray(aOwn.body) && aOwn.body.length === 1, 'RLS-01: S
 assert(bOwn.ok && Array.isArray(bOwn.body) && bOwn.body.length === 1, 'RLS-03: Student B must resolve exactly one own learner identity');
 assert(aOwn.body[0].auth_user_id !== bOwn.body[0].auth_user_id, 'AUTH-04: Student A/B principals must be distinct');
 
-const [aAttempts, bAttempts] = await Promise.all([
+const aLearnerId = aOwn.body[0].learner_id;
+const bLearnerId = bOwn.body[0].learner_id;
+const [aAttempts, bAttempts, aTargetsBIdentity, bTargetsAIdentity, aTargetsBAttempts, bTargetsAAttempts] = await Promise.all([
   api('activity_attempt?select=attempt_id,learner_id', studentA),
-  api('activity_attempt?select=attempt_id,learner_id', studentB)
+  api('activity_attempt?select=attempt_id,learner_id', studentB),
+  api(`learner_identity?select=learner_id&learner_id=${eq(bLearnerId)}`, studentA),
+  api(`learner_identity?select=learner_id&learner_id=${eq(aLearnerId)}`, studentB),
+  api(`activity_attempt?select=attempt_id,learner_id&learner_id=${eq(bLearnerId)}`, studentA),
+  api(`activity_attempt?select=attempt_id,learner_id&learner_id=${eq(aLearnerId)}`, studentB)
 ]);
 assert(aAttempts.ok && Array.isArray(aAttempts.body), 'RLS-01: Student A own activity read failed');
 assert(bAttempts.ok && Array.isArray(bAttempts.body), 'RLS-03: Student B own activity read failed');
-assert(aAttempts.body.every(x => x.learner_id === aOwn.body[0].learner_id), 'RLS-02: Student A can see another learner attempt');
-assert(bAttempts.body.every(x => x.learner_id === bOwn.body[0].learner_id), 'RLS-04: Student B can see another learner attempt');
+assert(aAttempts.body.every(x => x.learner_id === aLearnerId), 'RLS-02: Student A can see another learner attempt');
+assert(bAttempts.body.every(x => x.learner_id === bLearnerId), 'RLS-04: Student B can see another learner attempt');
+assert(aTargetsBIdentity.ok && Array.isArray(aTargetsBIdentity.body) && aTargetsBIdentity.body.length === 0, 'RLS-02: Student A can target-read Student B identity');
+assert(bTargetsAIdentity.ok && Array.isArray(bTargetsAIdentity.body) && bTargetsAIdentity.body.length === 0, 'RLS-04: Student B can target-read Student A identity');
+assert(aTargetsBAttempts.ok && Array.isArray(aTargetsBAttempts.body) && aTargetsBAttempts.body.length === 0, 'RLS-02: Student A can target-read Student B attempts');
+assert(bTargetsAAttempts.ok && Array.isArray(bTargetsAAttempts.body) && bTargetsAAttempts.body.length === 0, 'RLS-04: Student B can target-read Student A attempts');
 
+const validObjectId = aAttempts.body[0]?.attempt_id;
+assert(validObjectId, 'RLS-05 precondition: Student A requires at least one own synthetic activity_attempt so teacher-write denial is not vacuous');
 const deniedAssessment = await api('assessment', studentA, {
   method: 'POST', headers: { Prefer: 'return=minimal' },
   body: JSON.stringify({
-    object_type: 'activity_attempt', object_id: '00000000-0000-0000-0000-000000000000',
+    object_type: 'activity_attempt', object_id: validObjectId,
     assessor_user_id: aOwn.body[0].auth_user_id, rubric_version: 'synthetic-deny-test',
     rubric_payload: { synthetic: true }, assessment_status: 'draft'
   })
