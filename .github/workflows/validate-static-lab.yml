@@ -15,33 +15,22 @@ jobs:
         run: |
           set -e
           required=(
-            "index.html"
-            "styles.css"
-            "app.js"
-            "README.md"
-            "legacy-live-smoke.html"
-            "docs/index.html"
-            "docs/styles.css"
-            "docs/app.js"
-            "docs/PREVIEW-BOUNDARY.md"
-            "tests/contracts/hed3505-r3-r10-contract.mjs"
-            "docs/governance/HED3505-R3-R10-READINESS.md"
-            "auth-test/index.html"
-            "auth-test/package.json"
-            "auth-test/vite.config.js"
-            "auth-test/src/auth.js"
-            "auth-test/src/main.js"
+            "index.html" "styles.css" "app.js" "README.md" "legacy-live-smoke.html"
+            "docs/index.html" "docs/styles.css" "docs/app.js" "docs/PREVIEW-BOUNDARY.md"
+            "tests/contracts/hed3505-r3-r10-contract.mjs" "docs/governance/HED3505-R3-R10-READINESS.md"
+            "tests/neon/hed3505-auth-rbac.mjs" "tests/neon/hed3505-authorization-matrix.mjs"
+            "auth-test/index.html" "auth-test/package.json" "auth-test/vite.config.js" "auth-test/src/auth.js" "auth-test/src/main.js"
           )
-          for f in "${required[@]}"; do
-            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
-          done
-          echo "PASS: required core, readiness contract, preview, and R2 auth-build files exist."
+          for f in "${required[@]}"; do test -f "$f" || { echo "Missing required file: $f"; exit 1; }; done
+          echo "PASS: required core/readiness/R2 authorization files exist."
 
       - name: Validate JavaScript syntax
         run: |
           node --check app.js
           node --check docs/app.js
           node --check tests/contracts/hed3505-r3-r10-contract.mjs
+          node --check tests/neon/hed3505-auth-rbac.mjs
+          node --check tests/neon/hed3505-authorization-matrix.mjs
           node --check auth-test/src/auth.js
           node --check auth-test/src/main.js
           node --check auth-test/vite.config.js
@@ -49,16 +38,21 @@ jobs:
       - name: Enforce R3-R10 reversible readiness contract
         run: node tests/contracts/hed3505-r3-r10-contract.mjs
 
-      - name: R2 auth source security guard
+      - name: R2 auth and authorization source security guard
         shell: bash
         run: |
           set -e
-          if grep -R -E 'br-hidden-dream-b3jh4lgz|password[[:space:]]*=|JWT[[:space:]]*=|OTP[[:space:]]*=' auth-test --exclude-dir=node_modules; then
-            echo "FAIL: forbidden production identifier or credential-like assignment found in R2 auth source."
+          targets=(auth-test tests/neon/hed3505-auth-rbac.mjs tests/neon/hed3505-authorization-matrix.mjs)
+          if grep -R -E 'br-hidden-dream-b3jh4lgz|password[[:space:]]*=|JWT[[:space:]]*=|OTP[[:space:]]*=' "${targets[@]}" --exclude-dir=node_modules; then
+            echo "FAIL: forbidden production identifier or credential-like assignment found in R2 source."
             exit 1
           fi
           grep -q "Refusing to fall back to production" auth-test/src/auth.js
-          echo "PASS: R2 auth source is fail-closed and contains no forbidden production branch identifier."
+          grep -q "genuine ephemeral authenticated sessions" tests/neon/hed3505-authorization-matrix.mjs
+          grep -q "RLS-05" tests/neon/hed3505-authorization-matrix.mjs
+          grep -q "TEACHER-01" tests/neon/hed3505-authorization-matrix.mjs
+          grep -q "AUDIT-02" tests/neon/hed3505-authorization-matrix.mjs
+          echo "PASS: R2 source remains fail-closed; executable authorization assertions are present; no forbidden production identifier detected."
 
       - name: Build isolated R2 auth UI
         working-directory: auth-test
