@@ -1,7 +1,24 @@
 {
-  "fixture_version": "1.1",
+  "fixture_version": "1.2",
   "classification": "SYNTHETIC / SANDBOX ONLY",
   "baseline": "HED3505 Independent Learning v3.2",
+  "M1": {
+    "initial": {
+      "fact": "CPR knowledge pass 81% และ CPR performance pass 38%",
+      "interpretation": "ความรู้และการปฏิบัติ CPR ให้ภาพผลลัพธ์ต่างมิติ จึงไม่ควรใช้แทนกัน",
+      "assumption": "ยังไม่ทราบว่าความแตกต่างเกิดจากคุณภาพการสอนเพียงปัจจัยเดียว",
+      "judgment": "ต้องใช้หลักฐานเพิ่มเติมก่อนตัดสินประสิทธิผลของโปรแกรมโดยรวม"
+    },
+    "guided_feedback": "แยก Fact, Interpretation, Assumption และ Judgment ให้ชัด และไม่สรุปเหตุผลเชิงสาเหตุจากข้อมูลที่มี",
+    "revision": {
+      "fact": "CPR knowledge pass 81% และ CPR performance pass 38% เป็นผลลัพธ์คนละตัวชี้วัด",
+      "interpretation": "ผลทั้งสองสะท้อนความแตกต่างระหว่างความรู้กับสมรรถนะการปฏิบัติ",
+      "assumption": "สาเหตุของช่องว่างระหว่างความรู้กับการปฏิบัติยังไม่ยืนยันจากหลักฐานที่มี",
+      "judgment": "ควรเก็บหรือทบทวนหลักฐานกระบวนการฝึกและการประเมินทักษะก่อนเสนอการปรับโปรแกรม"
+    },
+    "reflection": "การแก้ไขลดการตัดสินเกินหลักฐานและทำให้ข้อเสนอเชื่อมกับข้อมูลมากขึ้น",
+    "synthetic": true
+  },
   "M2": {
     "objective": "ประเมินผลการดำเนินงานโปรแกรมสุขภาพในโรงเรียน",
     "evaluation_question": "โปรแกรมบรรลุผลตามวัตถุประสงค์ที่กำหนดหรือไม่",
@@ -12,6 +29,7 @@
     "criterion": "เปรียบเทียบหลักฐานกับเกณฑ์ที่กำหนดก่อนตัดสิน",
     "possible_decision": "COLLECT MORE EVIDENCE",
     "self_audit": "ตรวจความสอดคล้อง Objective → Evaluation Question → Indicator → Data Source → Instrument → Criterion ด้วยตนเอง",
+    "guided_feedback": "ทำให้ Evaluation Question, Indicator, Data Source และ Criterion ตอบวัตถุประสงค์เดียวกันโดยตรง",
     "final_revision": "ปรับสายโซ่การประเมินให้แต่ละองค์ประกอบเชื่อมโยงกัน",
     "synthetic": true
   },
@@ -23,19 +41,58 @@
     "rationale": "ลดความไม่แน่นอนของข้อสรุปและหลีกเลี่ยงการตัดสินเกินหลักฐาน",
     "decision_improved": "ช่วยเลือกระหว่าง CONTINUE WITH MODIFICATION และ COLLECT MORE EVIDENCE",
     "confidence": "moderate",
+    "revision_after_feedback": "ระบุหลักฐานที่ขาดให้สัมพันธ์กับคำถามประเมินและอธิบายว่าจะลดความไม่แน่นอนอย่างไร",
     "synthetic": true
   },
   "M3_EVALUATION_DECISION": {
-    "evidence": "ใช้หลักฐานหลายแหล่งจากกรณีศึกษาโดยไม่สร้างข้อมูลเพิ่ม",
-    "interpretation": "แยกข้อเท็จจริงออกจากการตีความและข้อสันนิษฐาน",
-    "limitation": "หลักฐานบางตัววัดคนละมิติและไม่เพียงพอสำหรับข้อสรุปเชิงเหตุผล",
-    "criterion": "ใช้เกณฑ์ที่ระบุชัดก่อนตัดสิน",
-    "judgment": "หลักฐานยังมีข้อจำกัด จึงไม่สรุปเกินข้อมูล",
-    "recommendation": "เก็บหลักฐานเพิ่มเติมก่อนยืนยันข้อสรุป",
+    "initial": {
+      "evidence": "ใช้หลักฐานหลายแหล่งจากกรณีศึกษาโดยไม่สร้างข้อมูลเพิ่ม",
+      "interpretation": "แยกข้อเท็จจริงออกจากการตีความและข้อสันนิษฐาน",
+      "limitation": "หลักฐานบางตัววัดคนละมิติและไม่เพียงพอสำหรับข้อสรุปเชิงเหตุผล",
+      "criterion": "ใช้เกณฑ์ที่ระบุชัดก่อนตัดสิน",
+      "judgment": "หลักฐานยังมีข้อจำกัด จึงไม่สรุปเกินข้อมูล",
+      "recommendation": "เก็บหลักฐานเพิ่มเติมก่อนยืนยันข้อสรุป",
+      "action": "COLLECT MORE EVIDENCE",
+      "decision_code": "COLLECT_MORE_EVIDENCE",
+      "confidence": "moderate"
+    },
+    "guided_feedback": "เชื่อม Evidence → Interpretation → Limitation → Criterion → Judgment → Recommendation → Action และระบุความไม่แน่นอน",
+    "revision": {
+      "evidence": "ใช้หลักฐานผลลัพธ์และข้อจำกัดของข้อมูลที่มีในกรณีศึกษา",
+      "interpretation": "ผลลัพธ์บางด้านดีแต่ยังไม่ครอบคลุมพอสำหรับข้อสรุปโปรแกรมทั้งหมด",
+      "limitation": "ไม่มีหลักฐานเพียงพอที่จะยืนยันเหตุและผลหรือความสม่ำเสมอของผลในทุกกลุ่ม",
+      "criterion": "ต้องมีหลักฐานที่ตรงคำถามประเมินและเพียงพอต่อการตัดสิน",
+      "judgment": "ยังไม่ควรยืนยันความสำเร็จหรือยุติโปรแกรม",
+      "recommendation": "เก็บหลักฐานเพิ่มเติมในประเด็นที่ขาดก่อนตัดสินรอบถัดไป",
+      "action": "COLLECT MORE EVIDENCE",
+      "decision_code": "COLLECT_MORE_EVIDENCE",
+      "confidence": "moderate"
+    },
+    "evidence": "ใช้หลักฐานผลลัพธ์และข้อจำกัดของข้อมูลที่มีในกรณีศึกษา",
+    "interpretation": "ผลลัพธ์บางด้านดีแต่ยังไม่ครอบคลุมพอสำหรับข้อสรุปโปรแกรมทั้งหมด",
+    "limitation": "ไม่มีหลักฐานเพียงพอที่จะยืนยันเหตุและผลหรือความสม่ำเสมอของผลในทุกกลุ่ม",
+    "criterion": "ต้องมีหลักฐานที่ตรงคำถามประเมินและเพียงพอต่อการตัดสิน",
+    "judgment": "ยังไม่ควรยืนยันความสำเร็จหรือยุติโปรแกรม",
+    "recommendation": "เก็บหลักฐานเพิ่มเติมในประเด็นที่ขาดก่อนตัดสินรอบถัดไป",
     "action": "COLLECT MORE EVIDENCE",
     "decision_code": "COLLECT_MORE_EVIDENCE",
     "confidence": "moderate",
     "perspective_rotation": ["Evaluator", "Evidence Auditor", "Stakeholder", "Decision Maker"],
+    "synthetic": true
+  },
+  "COMPLETION": {
+    "required_events": [
+      "mission-1-completed",
+      "mission-2-completed",
+      "mission-3-completed",
+      "required-feedback-viewed",
+      "required-revision-completed",
+      "final-review-completed",
+      "practice-check-completed"
+    ],
+    "all_requirements_met": false,
+    "certificate_eligible": false,
+    "reason": "Synthetic fixture intentionally keeps final-review/practice runtime completion unproven; certificate must remain locked until server-authoritative completion is verified.",
     "synthetic": true
   }
 }
