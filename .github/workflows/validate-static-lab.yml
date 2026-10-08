@@ -17,12 +17,12 @@ jobs:
           required=(
             "index.html" "styles.css" "app.js" "README.md" "legacy-live-smoke.html"
             "docs/index.html" "docs/styles.css" "docs/app.js" "docs/PREVIEW-BOUNDARY.md"
-            "tests/contracts/hed3505-r3-r10-contract.mjs" "tests/contracts/hed3505-teacher-command-center-contract.mjs" "tests/contracts/hed3505-completion-eligibility-contract.mjs" "tests/contracts/hed3505-accessibility-regression-contract.mjs" "tests/contracts/hed3505-final-synthetic-e2e-contract.mjs" "tests/contracts/hed3505-r2-syn-evidence-matrix-contract.mjs" "docs/governance/HED3505-R3-R10-READINESS.md" "docs/qa/HED3505-R2-SYN-RUNTIME-EVIDENCE-MATRIX.md"
+            "tests/contracts/hed3505-r3-r10-contract.mjs" "tests/contracts/hed3505-teacher-command-center-contract.mjs" "tests/contracts/hed3505-completion-eligibility-contract.mjs" "tests/contracts/hed3505-accessibility-regression-contract.mjs" "tests/contracts/hed3505-final-synthetic-e2e-contract.mjs" "tests/contracts/hed3505-r2-syn-evidence-matrix-contract.mjs" "tests/contracts/hed3505-h1-readiness-dossier-contract.mjs" "docs/governance/HED3505-R3-R10-READINESS.md" "docs/qa/HED3505-R2-SYN-RUNTIME-EVIDENCE-MATRIX.md" "docs/qa/HED3505-H1-PILOT-READINESS-DOSSIER.md"
             "tests/neon/hed3505-auth-rbac.mjs" "tests/neon/hed3505-authorization-matrix.mjs"
             "auth-test/index.html" "auth-test/package.json" "auth-test/vite.config.js" "auth-test/src/auth.js" "auth-test/src/main.js"
           )
           for f in "${required[@]}"; do test -f "$f" || { echo "Missing required file: $f"; exit 1; }; done
-          echo "PASS: required core/readiness/security/completion/accessibility/final-E2E contract files exist."
+          echo "PASS: required core/readiness/security/completion/accessibility/final-E2E/H1 contract files exist."
 
       - name: Validate JavaScript syntax
         run: |
@@ -34,6 +34,7 @@ jobs:
           node --check tests/contracts/hed3505-accessibility-regression-contract.mjs
           node --check tests/contracts/hed3505-final-synthetic-e2e-contract.mjs
           node --check tests/contracts/hed3505-r2-syn-evidence-matrix-contract.mjs
+          node --check tests/contracts/hed3505-h1-readiness-dossier-contract.mjs
           node --check tests/neon/hed3505-auth-rbac.mjs
           node --check tests/neon/hed3505-authorization-matrix.mjs
           node --check auth-test/src/auth.js
@@ -57,6 +58,9 @@ jobs:
 
       - name: Enforce R2-SYN runtime evidence matrix governance
         run: node tests/contracts/hed3505-r2-syn-evidence-matrix-contract.mjs
+
+      - name: Enforce H1 controlled pilot readiness dossier
+        run: node tests/contracts/hed3505-h1-readiness-dossier-contract.mjs
 
       - name: R2 auth and authorization source security guard
         shell: bash
