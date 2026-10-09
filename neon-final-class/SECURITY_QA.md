@@ -8,7 +8,7 @@
 - Initial Judgment is writable only in ROUND1_OPEN. Revised Judgment requires ROUND2_OPEN and a stored Initial Judgment.
 - The `open_round2` RPC requires an instructor, enrollment equal to session capacity (7/7 in the approved rehearsal), and an Initial Judgment from every enrolled participant; it locks the session row before transition.
 - Participant join uses a row-locking capacity trigger. Responses and events are append-only. Feedback response reference is constrained to the same session.
-- Peer feedback with a response reference must target a response authored by the feedback recipient in the same session. A SECURITY DEFINER trigger checks this without exposing the recipient's response to the feedback author. Assessments and peer feedback are now immutable under UPDATE/DELETE triggers.
+- Peer feedback with a response reference must target a response authored by the feedback recipient in the same session. A SECURITY DEFINER trigger checks this without exposing the recipient's response to the feedback author. Assessments and peer feedback are immutable under UPDATE/DELETE triggers.
 - Assessment insert requires instructor subject; five 0–2 rubric criteria must sum to the 0–10 total. Instructor UI can review individual Revised Judgment/Decision Brief and append rubric assessment; learner UI reads only its own score/feedback through RLS.
 
 ## Executed SQL checks (staging)
@@ -21,7 +21,8 @@
 - Isolated GitHub Actions build and static-preview HTTP smoke passed. This does not verify interactive browser auth or API calls.
 - A rollback-only feedback test rejected a response belonging to a different recipient, accepted the matching recipient, and left zero records after rollback. Migration recorded in `migrations/002_feedback_integrity.sql`.
 - A rollback-only grading test verified that an authenticated role without a valid instructor JWT could not insert a grade, while the privileged fixture accepted a valid 9/10 rubric record; all synthetic rows were rolled back.
-- No actual student records have been imported. One explicitly authorized instructor identity is now allowlisted in isolated staging after successful Neon Auth sign-in; this does not authorize production.
+- No actual student records have been imported. One explicitly authorized instructor identity is allowlisted in isolated staging after successful Neon Auth sign-in; this does not authorize production.
+- Instructor profile reconciliation is complete in staging: the existing allowlist row was updated in place (no duplicate, original grant timestamp retained) to display `ผู้ช่วยศาสตราจารย์ ดร.เกษม ชูรัตน์ · ภาควิชาพลานามัย · คณะศึกษาศาสตร์ · มหาวิทยาลัยรามคำแหง`. The table deliberately stores the authenticated subject plus display name rather than duplicating the login email.
 
 ## Remaining acceptance gates — do not mark passed without evidence
 1. Auth/browser evidence is partial: successful authenticated browser sessions and an explicitly authorized instructor allowlist entry have been observed in staging. Full signup/unverified-account rejection and Google callback remain unproven; UI-only `emailVerified` is not a substitute for server enforcement.
@@ -32,7 +33,7 @@
 6. Explicit human approval for any real-student or public release. Keep this PR draft and unmerged.
 
 ## Administrative procedure
-Instructor staging authorization has now been exercised once: the explicitly approved account authenticated first, its actual Neon Auth subject was resolved server-side, and that subject was inserted into `hed3505_final_class.instructors`. Never grant instructor role from a user-entered email or client-side assertion. Repeat this procedure for any future instructor identity.
+Instructor staging authorization has been exercised once: the explicitly approved account authenticated first, its actual Neon Auth subject was resolved server-side, and that subject was inserted into `hed3505_final_class.instructors`. The approved profile is now attached to that existing subject without changing the authorization identity. Never grant instructor role from a user-entered email or client-side assertion. Repeat the server-resolved procedure for any future instructor identity.
 
 ## Deployment boundary
 The Vite application lives only under `neon-final-class/` on the isolated branch. GitHub Actions builds an artifact but does not deploy to Pages. Supabase LAB 1–5 remains unchanged.
