@@ -7,10 +7,16 @@ Vercel: NOT USED
 
 ## Verified baseline
 Feature branch: `hed3505-wordpress-final-learning-studio-01`
-Verified static baseline head: `f5f8b78de78eece2d7206efee1cff88c5dfa2f6d`
-CI #539: FULL PASS.
 
-Verified static/synthetic gates include R3–R10 reversible readiness, Teacher Command Center synthetic contract, evidence-based completion/eligibility contract, accessibility structural regression contract, Final Synthetic E2E static readiness, R2 auth/authorization source security guard, isolated R2 auth UI build, module labels, privacy boundary, preview isolation, and preview parity.
+Operational source of truth: the latest completed successful `Validate Static Learning Lab` workflow for the feature branch. Fixed commit/run references below are evidence snapshots, not perpetual readiness authority.
+
+Latest verified evidence snapshot before this documentation reconciliation:
+- Head: `0a32a12078d7913c66811e65b883b57a106ce702`
+- CI #549: FULL PASS
+- PR #3: OPEN / DRAFT / NOT MERGED / MERGE HOLD
+- Branch comparison at the snapshot: ahead 128 / behind 0
+
+Verified static/synthetic gates include R3–R10 reversible readiness, Teacher Command Center synthetic contract, evidence-based completion/eligibility contract, accessibility structural regression contract, measured accessibility evidence-boundary contract, Final Synthetic E2E static readiness, R2-SYN runtime-evidence governance, H1 readiness governance, R2 auth/authorization source security guard, isolated R2 auth UI build, module labels, privacy boundary, preview isolation, and preview parity.
 
 ## Evidence classification
 ### PASS — verified
@@ -20,10 +26,11 @@ Verified static/synthetic gates include R3–R10 reversible readiness, Teacher C
 - Completion/certificate fail-closed static contract
 - Teacher Command Center synthetic contract
 - Accessibility structural regression gate
+- Measured accessibility evidence-boundary governance
 - Privacy and preview-isolation checks
 
 ### PASS WITH OPEN MEASURED CONDITION
-- Accessibility measured baseline remains 97; color-contrast condition remains OPEN until measured retest. Structural regression PASS does not upgrade the measured score.
+- Accessibility measured baseline remains 97; color-contrast condition remains OPEN until measured retest. Structural regression PASS does not prove the measured color-contrast condition is resolved and does not upgrade the measured score.
 
 ### PENDING — runtime evidence required
 - R2-SYN multi-principal runtime authorization matrix
@@ -42,6 +49,8 @@ Verified static/synthetic gates include R3–R10 reversible readiness, Teacher C
 
 ## Current blocker
 Neon connector/tool routing currently returns `Resource not found: Neon.run_sql` after controlled rediscovery/retry. This is classified as CONNECTOR BLOCKED. It is not evidence of database failure and not evidence of RLS failure. No database mutation was performed by the failed retry.
+
+Do not loop retries while connector state is materially unchanged. Resume with one controlled read-only retry after a meaningful connector/tool-state change.
 
 ## H1 entry criteria
 H1 may be presented only after:
